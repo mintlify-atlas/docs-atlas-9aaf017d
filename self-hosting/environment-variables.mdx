@@ -1,0 +1,119 @@
+---
+title: 'Environment variables for FW Mining OS self-hosting'
+description: 'Every environment variable that FW Mining OS reads at build time, with descriptions, requirements, and example values for local and production deployments.'
+---
+
+FW Mining OS uses Vite's `import.meta.env` system to read configuration at build time. All variables that the browser needs must be prefixed with `VITE_`. Variables without this prefix are never included in the compiled bundle.
+
+There are two relevant example files in the repository:
+
+- **`.env.local.example`** — minimal set for local development; copy to `.env.local`
+- **`.env.example`** — full set including optional backend-provider variables
+
+## Local development setup
+
+```bash
+# 1. Copy the example file
+cp .env.local.example .env.local
+
+# 2. Fill in your Supabase project values
+# Values are in: Supabase dashboard → your project → Settings → API
+```
+
+```bash .env.local
+# Required — get these from Supabase dashboard → Settings → API
+VITE_SUPABASE_URL=https://abcdefghijklmnop.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+## Variable reference
+
+### Required variables
+
+<ParamField path="VITE_SUPABASE_URL" type="string" required>
+  The full URL of your Supabase project. Found in **Settings → API → Project URL**.
+
+  Example: `https://abcdefghijklmnop.supabase.co`
+
+  The application throws an error on startup if this value is missing.
+</ParamField>
+
+<ParamField path="VITE_SUPABASE_ANON_KEY" type="string" required>
+  The public anonymous key for your Supabase project. Found in **Settings → API → Project API keys → anon public**. This key is safe to embed in the frontend — it is scoped by Row Level Security policies.
+
+  Example: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFiY2RlZmdoaWprbG1ub3AiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTcwMDAwMDAwMCwiZXhwIjoyMDE1MzYwMDAwfQ...`
+
+  The application throws an error on startup if this value is missing.
+</ParamField>
+
+### Optional variables
+
+<ParamField path="VITE_BACKEND_PROVIDER" type="string" default="supabase">
+  Selects which backend the application communicates with. This is a **deploy-time decision** — not configurable by end users at runtime. Accepted values: `supabase` or `rest`.
+
+  Set this to `rest` only if you are running the optional Laravel REST API alongside Supabase. For standard self-hosted deployments, leave this unset or set it to `supabase`.
+
+  Example: `supabase`
+</ParamField>
+
+<ParamField path="VITE_REST_BASE_URL" type="string">
+  Base URL of the Laravel REST API. Required when `VITE_BACKEND_PROVIDER=rest`. Must use HTTPS in production. Do not include a trailing slash.
+
+  Example: `https://api.yoursite.com/api/v1`
+
+  If `VITE_BACKEND_PROVIDER=rest` and this variable is empty, the application logs a console error and all API calls will fail.
+</ParamField>
+
+## Setting variables for production
+
+<Tabs>
+  <Tab title="Vercel">
+    <Steps>
+      <Step title="Open project settings">
+        In the Vercel dashboard, go to your project → **Settings → Environment Variables**.
+      </Step>
+      <Step title="Add each variable">
+        Add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` with their production values. Make sure the **Production** environment checkbox is selected.
+      </Step>
+      <Step title="Redeploy">
+        Trigger a new deployment so the build picks up the new variables. Vercel bakes `VITE_*` variables into the static bundle at build time.
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab title="Other static hosts">
+    Set environment variables in your CI/CD pipeline before running `bun run build`. The exact mechanism depends on your host:
+
+    ```bash
+    # Example: export before build
+    export VITE_SUPABASE_URL=https://abcdefghijklmnop.supabase.co
+    export VITE_SUPABASE_ANON_KEY=eyJ...
+
+    bun run build
+    # Upload dist/ to your host
+    ```
+
+    Do not commit `.env.local` to version control. Add it to `.gitignore`.
+  </Tab>
+</Tabs>
+
+<Warning>
+`VITE_*` variables are embedded in the compiled JavaScript bundle and are visible to anyone who inspects it. Never put secrets, service-role keys, or private API keys in `VITE_*` variables. The Supabase `anon` key is designed to be public — all access control is enforced by Row Level Security on the server.
+</Warning>
+
+## Complete .env.example
+
+For reference, here is the full `.env.example` from the repository:
+
+```bash .env.example
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+
+# Backend provider: "supabase" (default) or "rest"
+# This is a deployment-time decision — not configurable by end users.
+VITE_BACKEND_PROVIDER=supabase
+
+# Required when VITE_BACKEND_PROVIDER=rest
+# Must be HTTPS in production. No trailing slash.
+# Example: https://api.yoursite.com/api/v1
+VITE_REST_BASE_URL=
+```

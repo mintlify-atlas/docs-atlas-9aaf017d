@@ -1,126 +1,94 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "mint",
-  "name": "Mintlify Starter Kit",
+  "name": "FW Mining OS",
+  "theme": "almond",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#7b7a90",
+    "light": "#cac9d1"
   },
-  "favicon": "/favicon.svg",
+  "favicon": "https://media.brand.dev/30a59adc-ee79-4507-b3ad-02e6e91c3ec4.png",
+  "navbar": {
+    "primary": {
+      "type": "github",
+      "href": "https://github.com/FrankEWallace/gemstone-ledger"
+    }
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/FrankEWallace/gemstone-ledger"
+    }
+  },
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
+        "tab": "Documentation",
         "groups": [
           {
-            "group": "Getting started",
+            "group": "Get Started",
             "pages": [
-              "index",
+              "introduction",
               "quickstart",
-              "development"
+              "concepts"
             ]
           },
           {
-            "group": "Customization",
+            "group": "Core Features",
             "pages": [
-              "essentials/settings",
-              "essentials/navigation"
+              "features/dashboard",
+              "features/transactions",
+              "features/inventory",
+              "features/production"
             ]
           },
           {
-            "group": "Writing content",
+            "group": "Operations",
             "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/components",
-              "essentials/reusable-snippets"
+              "operations/team",
+              "operations/safety",
+              "operations/equipment",
+              "operations/supply-chain"
             ]
           },
           {
-            "group": "Agent ready",
+            "group": "Customers & Reports",
             "pages": [
-              "agent-ready/prompt",
-              "agent-ready/visibility",
-              "agent-ready/contextual",
-              "ai-tools/cursor",
-              "ai-tools/claude-code",
-              "ai-tools/windsurf"
+              "reporting/customers",
+              "reporting/reports",
+              "reporting/documents"
+            ]
+          },
+          {
+            "group": "Administration",
+            "pages": [
+              "admin/organization",
+              "admin/roles-permissions",
+              "admin/settings",
+              "admin/integrations"
             ]
           }
         ]
       },
       {
-        "tab": "API reference",
+        "tab": "Self-Hosting",
         "groups": [
           {
-            "group": "API documentation",
+            "group": "Deployment",
             "pages": [
-              "api-reference/introduction"
+              "self-hosting/overview",
+              "self-hosting/supabase-setup",
+              "self-hosting/database-migrations",
+              "self-hosting/environment-variables"
             ]
           },
           {
-            "group": "Endpoint examples",
+            "group": "Advanced",
             "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
+              "self-hosting/offline-sync",
+              "self-hosting/rls-policies"
             ]
           }
         ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
-    }
-  },
-  "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
-  },
-  "navbar": {
-    "links": [
-      {
-        "label": "Support",
-        "href": "mailto:hi@mintlify.com"
-      }
-    ],
-    "primary": {
-      "type": "button",
-      "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
-    }
-  },
-  "contextual": {
-    "options": [
-     "copy",
-     "view",
-     "chatgpt",
-     "claude",
-     "perplexity",
-     "mcp",
-     "cursor",
-     "vscode"
-   ]
-  },
-  "footer": {
-    "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
-    }
+    ]
   }
 }

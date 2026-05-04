@@ -1,0 +1,93 @@
+---
+title: 'Logging daily production output on your mine site'
+description: 'Record ore extraction, waste movement, grade, and water usage per day; track aggregate totals; and calculate cost-per-tonne from site expenses.'
+---
+
+The Production Log captures the physical output of your mine site on a day-by-day basis. Each entry records ore extracted, waste moved, grade, and water used for a given date, and optionally links the output to a specific customer. Aggregate totals and a cost-per-tonne figure are computed automatically from your logged entries and confirmed expense transactions.
+
+<CardGroup cols={2}>
+  <Card title="Daily log entries" icon="calendar-days">
+    One entry per site per day. Editing an existing date updates that record rather than creating a duplicate.
+  </Card>
+  <Card title="Aggregate summary cards" icon="chart-bar">
+    Total ore, total waste, average grade, days logged, and cost-per-tonne roll up across all visible entries.
+  </Card>
+  <Card title="Customer filter" icon="user">
+    Filter the log table and summary cards by customer to understand per-customer output for specific contract periods.
+  </Card>
+  <Card title="Cost per tonne" icon="coins">
+    Automatically calculated as total confirmed expenses ÷ total ore extracted for the filtered scope.
+  </Card>
+</CardGroup>
+
+## Field reference
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `log_date` | date | **Yes** | The date this entry covers (`YYYY-MM-DD`). One entry per site per day. |
+| `ore_tonnes` | number | No | Tonnes of ore extracted (`t`) |
+| `waste_tonnes` | number | No | Tonnes of waste material moved (`t`) |
+| `grade_g_t` | number | No | Ore grade in grams per tonne (`g/t`) |
+| `water_m3` | number | No | Volume of water used in cubic metres (`m³`) |
+| `notes` | string | No | Free-text field for shift observations or anomalies |
+
+<Note>
+  All numeric fields are optional — log only the metrics your site tracks. Blank fields display as `—` in the table and are excluded from averages.
+</Note>
+
+## Adding a production log entry
+
+<Steps>
+  <Step title="Click Log Day">
+    Click the **Log Day** button in the top-right corner of the Production Log page.
+  </Step>
+  <Step title="Select the date">
+    The date field defaults to today. Change it if you are back-filling a previous day. If a log already exists for that date on this site, submitting will update the existing record rather than create a new one.
+  </Step>
+  <Step title="Optionally assign a customer">
+    If the output is attributable to a specific customer, select them from the dropdown.
+  </Step>
+  <Step title="Enter production metrics">
+    Fill in the values you have for this day — ore extracted, waste moved, grade, and water used. Leave any field blank if the data is not available.
+  </Step>
+  <Step title="Add notes">
+    Use the Notes field to capture shift conditions, equipment issues, or anything relevant to this day's output.
+  </Step>
+  <Step title="Save">
+    Click **Add Log**. The entry appears at the top of the table (newest first) and the summary cards update immediately.
+  </Step>
+</Steps>
+
+## Editing and deleting entries
+
+Click any row in the table to re-open the log form pre-populated with that entry's values. Make your changes and click **Update**.
+
+To delete an entry, click the **×** icon on the right side of the row and confirm the deletion. Deletion is permanent.
+
+## Summary cards
+
+Five summary cards at the top of the log page aggregate the data visible in the current filtered view.
+
+| Card | Calculation |
+|---|---|
+| **Total Ore (t)** | Sum of `ore_tonnes` across all displayed entries |
+| **Total Waste (t)** | Sum of `waste_tonnes` across all displayed entries |
+| **Avg Grade (g/t)** | Mean of non-null `grade_g_t` values |
+| **Days Logged** | Count of log entries in the current filter scope |
+| **Cost / Tonne** | Total confirmed site expenses ÷ Total ore extracted |
+
+<Tip>
+  Set the customer filter before reading the summary cards when you need to report output and costs for a specific customer contract.
+</Tip>
+
+## How production data feeds into reports
+
+Production logs do not create financial transactions on their own. Their value in the reporting layer comes from:
+
+- **Cost per tonne** — the platform divides confirmed `expense` transactions (filtered to the same customer scope) by total ore extracted, giving you an operational efficiency metric alongside financial data.
+- **Grade tracking** — average grade across the reporting period can be compared against ore body models and contract targets.
+- **Ore-to-waste ratio** — derive the stripping ratio from Total Waste ÷ Total Ore for your operations review.
+
+<Note>
+  **Offline behaviour:** Production log entries are queued when your device is offline and replayed on reconnection. If a log for the same `site_id` and `log_date` was created on the server while you were offline, the upsert logic merges records using `site_id, log_date` as the conflict key — the last write wins.
+</Note>

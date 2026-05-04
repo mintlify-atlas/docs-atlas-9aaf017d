@@ -1,0 +1,103 @@
+---
+title: "Managing your organization and mine sites"
+description: "Configure your top-level organization account, manage mine sites across locations, and control which modules are available to all users in FW Mining OS."
+---
+
+Your organization is the top-level tenant in FW Mining OS. Everything — sites, users, financial data, and module configuration — lives under a single organization account. Admins can edit the organization profile, manage mine sites, and control which feature modules are visible to all users across the platform.
+
+## Organization profile
+
+The organization record stores your company's identity and regional defaults. To update these fields, go to **Settings → System Settings**.
+
+| Field | Description |
+|---|---|
+| `name` | Display name shown throughout the platform |
+| `slug` | Unique URL identifier — lowercase letters, numbers, and hyphens only |
+| `logo_url` | Organization logo shown in the sidebar and reports |
+| `disabled_modules` | Array of module keys hidden from all users org-wide |
+| `weekly_report_email` | Email address to receive the automated weekly summary report |
+| `weekly_report_enabled` | Toggle to enable or disable the weekly email report |
+
+<Note>
+Timezone and currency settings are configured per **site**, not at the organization level. Edit them in **Settings → Sites** after selecting the site you want to configure.
+</Note>
+
+<Note>
+The organization slug must be unique across all FW Mining OS accounts. Once set, changing it updates all internal URL references — notify your team before making this change.
+</Note>
+
+To upload a logo, click **Upload Logo** in System Settings. Accepted formats are PNG, JPG, and SVG up to 2 MB. The logo is stored in the `org-assets` storage bucket and served via a public URL.
+
+## Managing mine sites
+
+Each site represents a physical mine location with its own data, team, and configuration. Sites are independent — a transaction or safety incident recorded at one site is not visible to users at another.
+
+### Adding a site
+
+<Steps>
+  <Step title="Open Site Management">
+    Navigate to **Settings → Sites** or use the site switcher in the sidebar and select **Manage Sites**.
+  </Step>
+  <Step title="Click Add Site">
+    Click the **Add Site** button. The site creation dialog opens.
+  </Step>
+  <Step title="Fill in site details">
+    Enter the following fields:
+
+    - **Name** — the site's display name (e.g., "Mara North Open Pit")
+    - **Location** — physical address or geographic reference
+    - **Timezone** — the local timezone used for shift times and date display
+    - **Status** — set to **Active** for operational sites
+  </Step>
+  <Step title="Save the site">
+    Click **Create Site**. The site immediately appears in the sidebar site switcher for users who have been assigned a role on it.
+  </Step>
+</Steps>
+
+### Site statuses
+
+| Status | Meaning |
+|---|---|
+| **Active** | Site is operational. Data entry and reporting are fully available. |
+| **Inactive** | Site is temporarily suspended. Existing data is visible but no new records can be added. |
+| **Decommissioned** | Site has been permanently closed. Data is retained read-only. |
+
+### Switching between sites
+
+Use the site selector in the top of the sidebar to switch between your assigned sites. Only sites where you hold a role are shown. Admins can access all sites in the organization.
+
+## Module configuration
+
+Modules are major feature areas of FW Mining OS. Admins can disable any module org-wide — disabled modules are removed from the sidebar and are completely inaccessible to all users until re-enabled.
+
+Module configuration is managed under **Settings → System Settings → Module Configuration** (visible to admins only).
+
+<CardGroup cols={2}>
+  <Card title="Messages" icon="message">
+    Internal site messaging across general, safety, and operations channels.
+  </Card>
+  <Card title="Campaigns" icon="bullhorn">
+    Marketing and operational campaign management.
+  </Card>
+  <Card title="Customers" icon="address-book">
+    Customer accounts, contracts, and drill-down views.
+  </Card>
+  <Card title="Reports & Analytics" icon="chart-bar">
+    Financial and operational reporting with data exports.
+  </Card>
+  <Card title="Team & Scheduling" icon="calendar">
+    Team performance, shift scheduling, and timesheets.
+  </Card>
+  <Card title="Supply Chain" icon="truck">
+    Supplier list, distribution channels, and order management.
+  </Card>
+  <Card title="Operations" icon="hard-hat">
+    Equipment, safety incidents, production logs, and documents.
+  </Card>
+</CardGroup>
+
+<Note>
+Disabling a module takes effect immediately for all users. Re-enabling it restores access without any data loss — module data is preserved even when the module is turned off.
+</Note>
+
+To toggle a module, flip its switch in the Module Configuration section. Changes are saved instantly.

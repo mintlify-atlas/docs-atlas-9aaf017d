@@ -1,0 +1,141 @@
+---
+title: 'Offline sync and conflict resolution in FW Mining OS'
+description: 'IndexedDB mutation queue, server-wins and client-wins conflict resolution, service worker Background Sync integration, and the handler registry.'
+---
+
+FW Mining OS is a Progressive Web App that supports full offline operation on mine sites with unreliable connectivity. When a user creates or edits a record while offline, the mutation is written to a local IndexedDB queue and replayed against Supabase the next time connectivity is available.
+
+## Local database (Dexie + IndexedDB)
+
+The offline database is implemented with [Dexie](https://dexie.org/) and stored in IndexedDB under the name `fw-mining-os`. It contains the following stores:
+
+| Store | Purpose |
+|---|---|
+| `kv_store` | React Query cache persistence (key-value) |
+| `sync_queue` | Pending mutations awaiting sync to Supabase |
+| `sync_log` | Log of the last 200 sync attempts |
+| `safety_incidents` | Cached safety incident records for offline read |
+| `inventory_items` | Cached inventory data |
+| `transactions` | Cached financial transactions |
+| `equipment` | Cached equipment records |
+| `workers` | Cached worker records |
+| `shift_records` | Cached shift data |
+| `suppliers` | Cached supplier records |
+| `notifications` | Cached notifications |
+
+## Enqueuing a mutation
+
+When a user makes a change while offline, the service layer calls `enqueue()` from `src/lib/offline/syncQueue.ts`:
+
+```typescript
+import { enqueue } from '@/lib/offline/syncQueue';
+
+await enqueue({
+  entity: 'inventory_items',
+  operation: 'update',          // 'create' | 'update' | 'delete'
+  payload: { id: '...', quantity: 42 },
+  siteId: currentSiteId,
+  timestamp: Date.now(),
+});
+```
+
+After writing to IndexedDB, `enqueue()` registers the Background Sync tag `fw-mining-sync` with the service worker. This allows the browser to wake the service worker and fire the sync event even when the tab is backgrounded or closed.
+
+## Handler registry
+
+Each service file registers a handler for every entity and operation combination it owns. The sync engine dispatches queued items to the correct handler by looking up `${entity}.${operation}` in the registry.
+
+```typescript
+import { registerHandler } from '@/lib/offline/syncEngine';
+
+// Register once at app startup (e.g. inside the service module)
+registerHandler('inventory_items', 'update', async (item) => {
+  const payload = item.payload as { id: string; quantity: number };
+  const { error } = await supabase
+    .from('inventory_items')
+    .update({ quantity: payload.quantity })
+    .eq('id', payload.id);
+
+  if (error) throw error; // throw to trigger retry
+});
+```
+
+If no handler is registered for a queued item's `${entity}.${operation}` key, the engine logs a warning and skips that item.
+
+## Sync engine lifecycle
+
+`initSyncEngine()` is called once at app startup. It attaches two listeners:
+
+1. **`window` `online` event** — drains the queue whenever the browser detects connectivity.
+2. **`navigator.serviceWorker` `message` event** — drains the queue when the service worker sends a `SW_SYNC_REQUESTED` message in response to a Background Sync event.
+
+```typescript
+import { initSyncEngine } from '@/lib/offline/syncEngine';
+
+// In your root component or app initialisation
+const cleanup = initSyncEngine();
+// cleanup() removes event listeners on unmount
+```
+
+## Draining the queue
+
+`drainQueue()` processes pending items oldest-first. For each item it:
+
+<Steps>
+  <Step title="Purge permanently failed items">
+    Any item with `retries >= 5` (the `MAX_RETRIES` constant) is deleted from the queue before processing begins.
+  </Step>
+  <Step title="Check for conflicts">
+    For entities with the `SERVER_WINS` strategy, the engine fetches the server record's `updated_at` timestamp. If the server record was modified after the mutation was queued, the local change is discarded and a `conflict` entry is written to the sync log.
+  </Step>
+  <Step title="Run the handler">
+    The registered handler for `${entity}.${operation}` is called with the queued item. On success the item is removed from the queue. On failure, the retry counter is incremented.
+  </Step>
+  <Step title="Report progress">
+    An optional `onProgress(remaining)` callback is invoked after each item so the UI can display a live count of pending mutations.
+  </Step>
+</Steps>
+
+## Conflict resolution
+
+Two strategies are used depending on how critical the data is:
+
+| Strategy | Entities | Behaviour |
+|---|---|---|
+| `SERVER_WINS` | `safety_incidents`, `transactions` | If the server record was modified after the local mutation was queued, the local change is **discarded**. A `conflict` entry is written to the sync log with `conflictResolution: 'server_wins'`. |
+| `CLIENT_WINS` | `inventory_items`, `production_logs` | No conflict check is performed. The local mutation is always applied (last-write-wins). |
+
+<Warning>
+`safety_incidents` and `transactions` use server-wins conflict resolution because they are compliance-critical records. If a site manager resolves an incident or voids a transaction on the server while a worker has an older version queued offline, the server version takes precedence and the queued local change is silently discarded. Always confirm the current state in the app after reconnecting.
+</Warning>
+
+## Sync log
+
+Every sync attempt — success, failure, or conflict — is written to the `sync_log` IndexedDB store. The log is bounded to the last 200 entries; older entries are automatically pruned.
+
+You can view the sync log in the app at **Settings → Sync History**.
+
+The `useSyncLog(limit)` React hook reads from this store in real time:
+
+```typescript
+import { useSyncLog } from '@/lib/offline/syncEngine';
+
+function SyncHistory() {
+  const entries = useSyncLog(50); // last 50 entries
+  return (
+    <ul>
+      {entries.map((e) => (
+        <li key={e.id}>
+          {e.entity} · {e.operation} · {e.status}
+        </li>
+      ))}
+    </ul>
+  );
+}
+```
+
+## Service worker integration
+
+The PWA is configured in `vite.config.ts` with `vite-plugin-pwa` using the `injectManifest` strategy against `src/sw.ts`. When a mutation is enqueued and the tab is offline, the service worker registration's Background Sync API registers the tag `fw-mining-sync`. When the browser comes online it wakes the service worker, which fires a `SW_SYNC_REQUESTED` message back to the app. The sync engine's message listener then calls `drainQueue()`.
+
+Browsers that do not support the Background Sync API (e.g. Safari before iOS 16) fall back to the `window` `online` event listener automatically.

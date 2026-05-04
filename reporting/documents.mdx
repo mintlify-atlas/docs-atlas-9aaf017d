@@ -1,0 +1,85 @@
+---
+title: "Uploading, categorizing, and accessing site documents"
+description: "Attach compliance, safety, contract, and permit files to a mining site, then search, filter by category, and download them at any time."
+---
+
+The Documents module provides a secure file store scoped to each mining site. You can attach any type of file — permits, safety plans, contracts, training records, or reports — and retrieve them from within the platform without switching to external storage tools.
+
+## Document fields
+
+When a file is uploaded, the following metadata is stored alongside it.
+
+| Field | Description |
+|---|---|
+| `name` | Original file name as provided by the operating system. |
+| `category` | Optional grouping label chosen at upload time (see categories below). |
+| `mime_type` | MIME type detected from the file (for example, `application/pdf` or `image/png`). |
+| `file_size` | File size in bytes, displayed in human-readable format (KB or MB). |
+| `storage_path` | Internal path used to retrieve the file from storage. Not shown to users directly. |
+| `uploaded_by` | User ID of the person who performed the upload. |
+| `created_at` | Timestamp recorded at the moment of upload. |
+
+## Document categories
+
+Documents can be assigned to one of seven predefined categories.
+
+| Category | Typical use |
+|---|---|
+| `Compliance` | Regulatory filings, audit results, and certification records. |
+| `Safety` | Safety management plans, incident reports, and MSDS sheets. |
+| `Contracts` | Customer and supplier agreements. |
+| `Permits` | Mining permits, environmental approvals, and licences. |
+| `Reports` | Financial reports, production reports, and assessments. |
+| `Training` | Competency records, induction materials, and training certificates. |
+| `Other` | Anything that does not fit a specific category. |
+
+Assigning a category is optional. Documents without a category are still stored and accessible; the category filter simply will not include them.
+
+## Upload limits
+
+The maximum file size per upload is **20 MB**. Files are uploaded one at a time. There is no limit on the number of documents stored per site.
+
+## Uploading a document
+
+<Steps>
+  <Step title="Open the Documents page">
+    Navigate to **Documents** in the sidebar. The page shows all files currently stored for the active site.
+  </Step>
+  <Step title="Choose a category (optional)">
+    Before uploading, select a category from the **Category** dropdown in the top-right toolbar. This category is applied to the file you are about to upload. You can change it before uploading another file.
+  </Step>
+  <Step title="Upload the file">
+    Use either method:
+
+    - **Button** — Click **Upload File** to open the system file picker.
+    - **Drag and drop** — Drag a file from your file manager and drop it onto the dashed drop zone. The border highlights when a drag is detected.
+
+    The upload starts immediately. A success toast confirms the file name once the upload completes.
+  </Step>
+</Steps>
+
+<Warning>
+If a file exceeds 20 MB, the upload is rejected with an error notification. Compress the file or split it before uploading.
+</Warning>
+
+## Finding documents
+
+Use the **search box** to filter documents by file name. Use the **category dropdown** to restrict the list to a single category. Both filters work together — you can search within a category.
+
+The list shows all documents for the active site in reverse-chronological order (most recently uploaded first).
+
+## Downloading a document
+
+Click the **download icon** on any document row. The platform generates a signed, time-limited URL (valid for one hour in Supabase deployments) and opens the file download automatically. The signed URL is generated fresh on each click and is never exposed in the document list.
+
+<Note>
+Download URLs are generated on demand and expire after one hour. If you share a URL with another person, they will need their own authenticated session to access it.
+</Note>
+
+## Deleting a document
+
+Click the **trash icon** on any document row to open a confirmation dialog. Confirming the deletion removes the file from both the storage bucket and the metadata record. This action cannot be undone.
+
+<Warning>
+Document deletion is permanent. The file is removed from cloud storage immediately upon confirmation and cannot be recovered.
+</Warning>

@@ -1,0 +1,165 @@
+---
+title: "Row-level security policy design for FW Mining OS"
+description: "How FW Mining OS uses Supabase RLS to scope every query to the current user's organisation or site, with helper functions and patterns for custom tables."
+---
+
+Every table in the FW Mining OS database has Row Level Security (RLS) enabled. No authenticated user can read or write data outside their own organisation or assigned sites, regardless of the Supabase anon key being public. This page explains the policy design so you can extend it safely when adding custom tables.
+
+## Helper functions
+
+Three SQL functions provide the building blocks for all policies. They all run with `SECURITY DEFINER` so they can read `user_profiles` and `user_site_roles` without being blocked by RLS on those tables themselves (which would cause infinite recursion).
+
+```sql
+-- Returns the org_id of the currently logged-in user.
+-- Used for org-scoped table policies.
+CREATE OR REPLACE FUNCTION current_org_id()
+RETURNS uuid LANGUAGE sql STABLE SECURITY DEFINER AS $$
+  SELECT org_id FROM user_profiles WHERE id = auth.uid()
+$$;
+
+-- Returns the set of site_ids the current user has any role on.
+-- Used for site-scoped table policies.
+CREATE OR REPLACE FUNCTION accessible_site_ids()
+RETURNS SETOF uuid LANGUAGE sql STABLE SECURITY DEFINER AS $$
+  SELECT site_id FROM user_site_roles WHERE user_id = auth.uid()
+$$;
+
+-- Returns true if the current user has a role on a specific site.
+CREATE OR REPLACE FUNCTION has_site_access(site_id uuid)
+RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM user_site_roles
+    WHERE user_site_roles.site_id = $1
+      AND user_site_roles.user_id = auth.uid()
+  )
+$$;
+
+-- Returns true if the current user is an admin or site_manager on a specific site.
+CREATE OR REPLACE FUNCTION is_site_manager(site_id uuid)
+RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM user_site_roles
+    WHERE user_site_roles.site_id = $1
+      AND user_site_roles.user_id = auth.uid()
+      AND user_site_roles.role IN ('admin', 'site_manager')
+  )
+$$;
+```
+
+## Policy patterns
+
+### Org-scoped tables
+
+Tables that belong to an organisation (not a specific site) use `current_org_id()`:
+
+```sql
+-- Example: suppliers table
+ALTER TABLE suppliers ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "org members can view suppliers"
+  ON suppliers FOR SELECT
+  USING (org_id = current_org_id());
+
+CREATE POLICY "org members can manage suppliers"
+  ON suppliers FOR ALL
+  USING (org_id = current_org_id());
+```
+
+Other org-scoped tables: `organizations`, `channels`, `campaigns`, `integration_configs`, `expense_categories`.
+
+### Site-scoped tables
+
+Tables that belong to a site use `accessible_site_ids()` or `has_site_access()`:
+
+```sql
+-- Example: inventory_items table
+ALTER TABLE inventory_items ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "users can access inventory for their sites"
+  ON inventory_items FOR ALL
+  USING (site_id IN (SELECT accessible_site_ids()));
+```
+
+For tables where read access is open to all site members but write access is restricted to managers:
+
+```sql
+-- Example: equipment table (from migration 006)
+CREATE POLICY "site_members_read_equipment"
+  ON equipment FOR SELECT
+  USING (has_site_access(site_id));
+
+CREATE POLICY "site_managers_write_equipment"
+  ON equipment FOR ALL
+  USING (is_site_manager(site_id))
+  WITH CHECK (is_site_manager(site_id));
+```
+
+Other site-scoped tables: `transactions`, `workers`, `shift_records`, `messages`, `orders`, `order_items`, `safety_incidents`, `planned_shifts`, `site_documents`, `audit_logs`, `alert_rules`, `kpi_targets`, `production_logs`, `customers`, `inventory_write_offs`.
+
+### User-scoped tables
+
+The `notifications` table is scoped to the individual user's `auth.uid()`:
+
+```sql
+ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "users can access their own notifications"
+  ON notifications FOR ALL
+  USING (user_id = auth.uid());
+```
+
+## The circular dependency fix (migration 003)
+
+The initial schema defined `current_org_id()` and `accessible_site_ids()` without `SECURITY DEFINER`. This caused a recursive RLS loop: evaluating a policy on `user_profiles` called `current_org_id()`, which queried `user_profiles`, which triggered RLS again.
+
+Migration 003 resolves this by:
+
+1. Rebuilding both functions with `SECURITY DEFINER`, which causes them to execute as the function owner (a superuser) and bypass RLS.
+2. Adding a self-read policy on `user_profiles` (`id = auth.uid()`) that was missing from migration 001.
+3. Dropping and recreating the `user_site_roles` SELECT policy to use `user_id = auth.uid()` directly instead of calling `accessible_site_ids()` on itself.
+
+```sql
+-- Migration 003: self-read policy on user_profiles
+CREATE POLICY "users can read their own profile"
+  ON user_profiles FOR SELECT
+  USING (id = auth.uid());
+
+-- Migration 003: non-recursive policy on user_site_roles
+DROP POLICY IF EXISTS "users can view roles in their org sites" ON user_site_roles;
+CREATE POLICY "users can view their own roles"
+  ON user_site_roles FOR SELECT
+  USING (user_id = auth.uid());
+```
+
+## Adding custom tables
+
+If you add tables to the schema, follow these steps to keep the security model consistent:
+
+<Steps>
+  <Step title="Enable RLS immediately">
+    Always enable RLS at the same time you create the table. A table without RLS enabled is readable and writable by any authenticated user.
+
+    ```sql
+    ALTER TABLE my_custom_table ENABLE ROW LEVEL SECURITY;
+    ```
+  </Step>
+  <Step title="Choose the correct scope">
+    - If the table has an `org_id` column, use `current_org_id()`.
+    - If the table has a `site_id` column, use `has_site_access(site_id)` or `accessible_site_ids()`.
+    - If the table is user-specific, use `auth.uid()`.
+  </Step>
+  <Step title="Separate read and write policies">
+    Use separate `FOR SELECT` and `FOR ALL` (or `FOR INSERT` / `FOR UPDATE` / `FOR DELETE`) policies so you can grant read access to all site members while restricting writes to managers.
+  </Step>
+  <Step title="Test with the Supabase policy editor">
+    In the Supabase dashboard, go to **Authentication → Policies** and use the policy simulator to verify that users in different roles see only the rows they should.
+  </Step>
+</Steps>
+
+<Warning>
+Never disable RLS on an existing table in production without replacing it with application-level access control. Supabase exposes your database via a PostgREST API that uses the anon key — without RLS, any authenticated user can read every row in the table.
+</Warning>
+
+## Anonymous access
+
+All policies use `auth.uid()` or helper functions that call `auth.uid()`. For unauthenticated requests, `auth.uid()` returns `NULL`, which causes every `USING` clause to evaluate to `false`. This implicitly denies all anonymous access without requiring explicit `REVOKE` statements.

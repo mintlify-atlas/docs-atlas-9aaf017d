@@ -1,0 +1,98 @@
+---
+title: "Financial and inventory reports with PDF/CSV export"
+description: "Generate expense, income, inventory, and customer profitability reports for any date range, then export to PDF or CSV with one click."
+---
+
+The Reports module consolidates all financial and operational data from your site into a set of purpose-built report views. Each report is date-range aware and refreshes automatically when you change the period. You can export any report to PDF or CSV directly from the browser — no server-side processing required.
+
+## Report types
+
+<CardGroup cols={2}>
+  <Card title="Expense Breakdown" icon="chart-pie">
+    All expense transactions grouped by category. Includes a donut chart, a horizontal progress bar per category, and an expandable transaction list per category. Supports sorting by total amount, transaction count, or alphabetical order. Filterable by transaction status (All, Success, Pending, Refunded, Cancelled). Exportable to CSV.
+  </Card>
+  <Card title="Income Breakdown" icon="trending-up">
+    All income transactions grouped by category. Mirrors the expense breakdown layout with a visual income-sources grid and an expandable category list. Filterable by status and sortable by total, count, or name. Exportable to CSV.
+  </Card>
+  <Card title="Inventory Report" icon="package">
+    Stock levels, consumption by item and by customer, consumption over time (daily or monthly), low-stock alerts with estimated days remaining, and write-offs. Exportable to both PDF and CSV.
+  </Card>
+  <Card title="Customer Report" icon="users">
+    Per-customer income, expenses, net profit, transaction count, and expense category breakdown for any date range. Available in the **By Customer** tab on the main Reports page and as individual customer report pages. Exportable to CSV.
+  </Card>
+</CardGroup>
+
+## Date range selection
+
+All reports share a consistent date range selector with preset buttons and manual date inputs.
+
+| Preset | Period |
+|---|---|
+| This month | Start of the current month to today |
+| Last month | Previous calendar month |
+| 3M | Start of 3 months ago to today |
+| 6M | Start of 6 months ago to today |
+
+You can also type any custom **From** and **To** dates directly into the date inputs. The main Reports overview additionally offers a **Last 3 months** quick preset.
+
+<Note>
+Reports query transactions using `transaction_date`. Transactions dated outside the selected range are excluded even if they were created recently. Always verify your date range before exporting.
+</Note>
+
+## Main Reports overview
+
+Navigate to **Reports** in the sidebar to open the overview page. It contains two tabs.
+
+**Overview tab** — Shows six KPI cards (Total Income, Total Expenses, Net Revenue, Transactions, Shifts Logged, Profit Margin), a monthly Revenue vs. Expenses bar chart, an Expenses by Category breakdown, a Daily Hours Worked line chart, a detailed category table, a monthly financials table, and an Inventory Snapshot panel linking to the full Inventory Report.
+
+**By Customer tab** — A grid of customer summary cards ranked by net profit. Each card shows income, expenses, net profit, and a mini expense category breakdown. Click **View report →** to open the detailed per-customer report.
+
+## Generating a report
+
+<Steps>
+  <Step title="Open Reports">
+    Navigate to **Reports** in the sidebar. The overview loads with a default 6-month date range.
+  </Step>
+  <Step title="Set the date range">
+    Click a preset button (This month, Last 3 months, Last 6 months) or enter custom **From** and **To** dates. All charts and tables update immediately.
+  </Step>
+  <Step title="Select a report view">
+    Stay on the **Overview** tab for financial and production summaries, or switch to **By Customer** to compare profitability across clients.
+
+    For deeper drill-downs, use the dedicated report pages:
+    - **Expense Breakdown** — accessible from the Dashboard or by navigating to `/reports/expenses`
+    - **Income Breakdown** — accessible from the Dashboard or `/reports/income`
+    - **Inventory Report** — linked from the Inventory Snapshot panel or at `/reports/inventory`
+  </Step>
+  <Step title="Apply filters (breakdown reports)">
+    On the Expense and Income Breakdown pages, use the status filter pills to restrict results to a specific transaction status, and use the search box to find transactions by description or reference number.
+  </Step>
+</Steps>
+
+## Exporting reports
+
+<Steps>
+  <Step title="Export the financial overview as PDF">
+    On the main Reports page, click **Export PDF** in the top-right corner. The export includes:
+
+    - A summary section with Total Income, Total Expenses, Net Revenue, Transaction count, Shifts Logged, and Profit Margin
+    - Monthly Revenue vs. Expenses table
+    - Expenses by Category table with percentage share
+    - Customer Profitability table (if customer-linked transactions exist)
+
+    The PDF is generated in the browser using `@react-pdf/renderer` and downloaded automatically. File name format: `report-YYYY-MM-DD-YYYY-MM-DD.pdf`.
+  </Step>
+  <Step title="Export the Inventory Report as PDF or CSV">
+    On the Inventory Report page (`/reports/inventory`), click **Export PDF** or **Export CSV**. The CSV export contains four labelled sections: Stock Overview, Consumption by Item, Consumption by Customer, Low Stock Alerts, and Write-offs.
+  </Step>
+  <Step title="Export a breakdown report as CSV">
+    On the Expense Breakdown or Income Breakdown page, click **Export CSV** in the controls bar. The CSV includes: Date, Description, Reference, Category, Qty, Unit Price, Amount, and Status columns — one row per transaction. File name format: `expenses-YYYY-MM-DD.csv` or `income-YYYY-MM-DD.csv`.
+  </Step>
+  <Step title="Export the Customer report as CSV">
+    On the **By Customer** tab of the main Reports page, click **Export Customer CSV** above the customer grid. The CSV includes: Customer, Type, Income, Expenses, Net Profit, Margin %, Transactions, Top Expense Category, and Top Category Amount.
+  </Step>
+</Steps>
+
+<Note>
+PDF generation is performed entirely in the browser. Large date ranges with many transactions may take a few seconds to compile. The **Export PDF** button shows "Generating PDF…" while the file is being built.
+</Note>

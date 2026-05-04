@@ -1,0 +1,107 @@
+---
+title: 'Real-time financial dashboard with KPI tracking'
+description: 'The Dashboard gives you an at-a-glance view of site revenue, expenses, and net profit with trend indicators, breakdown charts, and live site status.'
+---
+
+The Dashboard is your operational home screen. It aggregates confirmed transactions into three headline KPI cards, visualises spending patterns through interactive breakdown charts, surfaces your top customers by profitability, and shows live site status at a glance — all scoped to the date range and customer you choose.
+
+<CardGroup cols={3}>
+  <Card title="KPI cards" icon="chart-line">
+    Revenue, Expenses, and Net Profit with month-over-month trend percentages and target progress bars.
+  </Card>
+  <Card title="Breakdown charts" icon="chart-pie">
+    Expense donut chart and income category bars with per-customer drill-down and period comparison.
+  </Card>
+  <Card title="Site status strip" icon="shield-check">
+    Live counts for equipment status, open safety incidents, today's shifts, and active team members.
+  </Card>
+</CardGroup>
+
+## Date range and customer filter
+
+Two date inputs and four quick-select presets let you scope every KPI and chart on the page to exactly the period you need.
+
+| Preset | Range |
+|---|---|
+| Today | Current calendar day |
+| This week | Monday → Sunday of the current week |
+| This month | First → last day of the current month |
+| Last 3 months | First day of three months ago → end of this month |
+
+A **Customer** dropdown in the top-right corner narrows all KPI cards and the Recent Transactions list to a single customer. The Expense and Income Breakdown charts have their own per-customer selector that operates independently.
+
+<Tip>
+  Selecting a customer in the page-level filter and then clicking a KPI card takes you to Transactions pre-filtered by that customer.
+</Tip>
+
+## KPI cards
+
+Three cards appear side by side at the top of the page. Each card reads only `success`-status transactions for the selected date range.
+
+| Card | What it measures | Trend direction |
+|---|---|---|
+| **Revenue** | Sum of `income` transactions | Up is good |
+| **Expenses** | Sum of `expense` transactions | Down is good |
+| **Net Profit** | Revenue minus Expenses | Up is good |
+
+Each card also shows:
+
+- **6-month sparkbars** — the monthly trend for the last six calendar months, computed independently of the date-range picker.
+- **Target progress bar** — fills from 0 % to 100 % as revenue approaches the monthly target. Set targets in **Settings → KPI Targets**.
+- **Insight line** — contextual text such as the top customer by revenue or your progress toward the monthly target.
+
+## Expense Breakdown
+
+The Expense Breakdown card occupies the left two-thirds of the breakdown row.
+
+- **Period pills** — 7D, 1M, 3M, 6M, 12M, All — independent of the main date picker.
+- **Compare toggle** — overlays the previous equivalent period so you can see whether spending is trending up or down.
+- **Mode toggle** — switch between **Overview** (expenses by category) and **Per Customer** (expenses by customer, with an optional drill-down into that customer's categories).
+- A **donut chart** and side legend show each category's share of total spending for the selected period.
+
+## Income Breakdown
+
+The Income Breakdown card sits to the right of the expense chart and uses the same period pills and mode toggle. Income is rendered as vertical category bars rather than a donut, making relative contribution easy to read at a glance.
+
+## Customer Profitability
+
+Below the breakdown charts, a ranked table shows your top five customers sorted by net profit for the current month. Clicking a row sets the page-level customer filter, immediately scoping the KPI cards and Recent Transactions to that customer.
+
+<Note>
+  Customer Profitability always covers the current calendar month regardless of the date range selected in the main picker.
+</Note>
+
+## Recent Transactions
+
+The last six transactions (newest first) are shown in a compact table with Description, Category, Status, Date, and Amount columns. Click **View all** to go to the full Transactions page.
+
+## Site Status strip
+
+A four-cell strip at the bottom of the page provides a read-only operational summary pulled in real time.
+
+| Cell | Data source | Alert condition |
+|---|---|---|
+| **Equipment** | `/equipment` | Any asset past its next service date |
+| **Safety** | `/safety` | Any open critical incident |
+| **Shifts today** | `/team/schedule` | — |
+| **Active team** | `/team` | — |
+
+Each cell links directly to its corresponding module for quick navigation.
+
+<Steps>
+  <Step title="Select your scope">
+    Pick a date preset or enter a custom range. Optionally choose a customer from the dropdown.
+  </Step>
+  <Step title="Read the KPI cards">
+    Check Revenue, Expenses, and Net Profit. Look at the trend badge to understand month-over-month movement.
+  </Step>
+  <Step title="Drill into breakdowns">
+    Switch the Expense Breakdown to **Per Customer** to find which customer is driving your biggest costs. Toggle **Compare** to validate the trend.
+  </Step>
+  <Step title="Review Customer Profitability">
+    Click any row to scope the whole page to that customer.
+  </Step>
+  <Step title="Check Site Status">
+    If the Equipment cell shows a yellow warning, navigate to Equipment to see overdue service dates.
+  </Step>
+</Steps>

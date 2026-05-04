@@ -1,0 +1,127 @@
+---
+title: "Suppliers, channels, and purchase orders"
+description: "Manage supplier contacts, configure sales and procurement channels, and run purchase orders from draft through to receipt with automatic inventory updates."
+---
+
+The Supply Chain module covers everything from supplier contact management to purchase order fulfilment. Suppliers and channels are shared across your whole organization, while purchase orders are site-scoped and linked to inventory items. Receiving an order automatically increments stock quantities and records expense transactions.
+
+<Tabs>
+  <Tab title="Suppliers">
+    Suppliers are organization-level records — any site within your organization can reference the same supplier when creating purchase orders.
+
+    ## Supplier field reference
+
+    | Field | Type | Required | Description |
+    |-------|------|----------|-------------|
+    | `name` | text | Yes | Supplier company name |
+    | `contact_name` | text | No | Primary contact person at the supplier |
+    | `email` | text | No | Contact email address |
+    | `phone` | text | No | Contact phone number |
+    | `address` | text | No | Physical or postal address |
+    | `category` | text | No | Supplier category, e.g. "Explosives", "Fuel", "Spare Parts" |
+    | `status` | enum | Yes | `active` — available for new orders; `inactive` — hidden from order creation |
+
+    ## Managing suppliers
+
+    Navigate to **Supply Chain → Suppliers** to view, add, edit, or deactivate supplier records. New suppliers default to `active` status. Set a supplier to `inactive` to prevent it from appearing in order creation dropdowns while keeping historical order references intact.
+
+    <Tip>
+      Use the `category` field to group suppliers by commodity type. This makes it easier to find the right supplier when creating orders for specific materials.
+    </Tip>
+  </Tab>
+
+  <Tab title="Channels">
+    Channels represent the sales and procurement pathways your organization uses — for example, a direct sales channel, a broker arrangement, or a specific procurement portal. Like suppliers, channels are organization-scoped and shared across sites.
+
+    ## Channel field reference
+
+    | Field | Type | Required | Description |
+    |-------|------|----------|-------------|
+    | `name` | text | Yes | Channel name, e.g. "Direct Export", "Local Broker" |
+    | `type` | text | No | Channel type, e.g. "sales", "procurement", "distribution" |
+    | `description` | text | No | Additional details about how the channel is used |
+
+    ## Managing channels
+
+    Navigate to **Supply Chain → Channels** to create and edit channel records. Channels can be linked to orders alongside or instead of a supplier, giving you flexibility to model both purchase and sales-side workflows.
+  </Tab>
+
+  <Tab title="Orders">
+    Purchase orders are site-scoped and track the full lifecycle of a procurement from initial draft through to receipt and inventory update.
+
+    ## Order status workflow
+
+    Orders move through the following statuses in sequence. Only forward transitions are valid — you cannot revert a received order.
+
+    1. **Draft** — order created but not yet sent to the supplier. Can be edited freely.
+    2. **Sent** — order has been transmitted to the supplier. Signals that quantities and pricing are committed.
+    3. **Confirmed** — supplier has acknowledged the order and confirmed the expected delivery date.
+    4. **Received** — goods have arrived on site. Receiving an order updates inventory quantities and records expense transactions for each line item.
+    5. **Cancelled** — order has been cancelled at any stage before receipt. Cancelled orders are retained for audit purposes.
+
+    ## Creating a purchase order
+
+    <Steps>
+      <Step title="Open the Orders page">
+        Navigate to **Supply Chain → Orders**. Click **New Order**.
+      </Step>
+      <Step title="Select a supplier or channel">
+        Choose the **Supplier** the order is directed to, or select a **Channel** if the order flows through a procurement channel rather than a direct supplier relationship. At least one should be set.
+      </Step>
+      <Step title="Set the expected delivery date">
+        Enter the **Expected Date** (YYYY-MM-DD). This is used to track delivery performance and flag overdue orders.
+      </Step>
+      <Step title="Add line items">
+        For each item to order, select the **Inventory Item**, enter the **Quantity**, and set the **Unit Price**. The line total is calculated automatically. Add as many lines as needed.
+      </Step>
+      <Step title="Add notes">
+        Use the **Notes** field for delivery instructions, reference numbers, or any other information for the supplier.
+      </Step>
+      <Step title="Save as draft">
+        Click **Create Order**. The order is saved with status `draft` and assigned an auto-generated order number (e.g. `PO-847291`). The `total_amount` is calculated from all line item totals.
+      </Step>
+    </Steps>
+
+    ## Receiving an order
+
+    When goods arrive on site, mark the order as received to update stock levels:
+
+    <Steps>
+      <Step title="Find the confirmed order">
+        On the Orders page, filter by status **Confirmed** to find the order.
+      </Step>
+      <Step title="Mark as received">
+        Click **Receive** on the order row. The system sets `status = received` and records today as the `received_date`.
+      </Step>
+      <Step title="Inventory updates automatically">
+        For each line item, the quantity is added to the linked inventory item's stock level. When using the REST backend, an expense transaction is also created per line (tagged `source: order`). On the standard Supabase deployment, only inventory quantities are updated — record the purchase cost separately as an expense transaction if needed.
+      </Step>
+    </Steps>
+
+    <Note>
+      Receiving an order updates stock levels atomically. If any inventory update fails, processing stops and the remaining line items are not updated.
+    </Note>
+
+    ## Order field reference
+
+    | Field | Type | Required | Description |
+    |-------|------|----------|-------------|
+    | `order_number` | text | Auto | System-generated identifier, e.g. `PO-847291` |
+    | `supplier_id` | uuid | No | Links to a supplier record |
+    | `channel_id` | uuid | No | Links to a channel record |
+    | `status` | enum | Yes | `draft`, `sent`, `confirmed`, `received`, or `cancelled` |
+    | `total_amount` | numeric | Auto | Sum of all line item totals |
+    | `expected_date` | date | No | Expected delivery date (YYYY-MM-DD) |
+    | `received_date` | date | No | Actual receipt date; set automatically on receive |
+    | `notes` | text | No | Free-text notes |
+
+    ### Order line item fields
+
+    | Field | Type | Required | Description |
+    |-------|------|----------|-------------|
+    | `inventory_item_id` | uuid | Yes | The inventory item being ordered |
+    | `quantity` | numeric | Yes | Quantity ordered |
+    | `unit_price` | numeric | Yes | Price per unit |
+    | `total` | numeric | Auto | `quantity × unit_price`, calculated by the database |
+  </Tab>
+</Tabs>

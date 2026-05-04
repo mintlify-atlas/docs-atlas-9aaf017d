@@ -1,0 +1,141 @@
+---
+title: "Configuring alerts, KPI targets, and categories"
+description: "Set up threshold-based alert rules, monthly KPI targets, expense categories, and profile preferences to tailor FW Mining OS to your operation."
+---
+
+FW Mining OS provides several configuration areas under the **Settings** menu. This page covers alert rules, KPI targets, expense categories, your personal profile, and the notification system. Organization-level configuration such as the org name, logo, timezone, currency, and module toggles are covered under [System Settings](/admin/organization).
+
+<Tabs>
+  <Tab title="KPI targets">
+    KPI targets let you set monthly performance goals per site. Once targets are set, the dashboard shows a progress bar toward each target alongside the current figures.
+
+    <Note>
+    KPI targets are set per-month, per-site. You must select an active site before editing targets. Targets are independent between months — setting a target for May does not affect April or June.
+    </Note>
+
+    Navigate to **Settings → KPI Targets** to manage targets. Use the month navigation arrows to move between months, or click **Today** to return to the current month.
+
+    ### Available KPI fields
+
+    | Field | Unit | Description |
+    |---|---|---|
+    | **Revenue Target** | Currency | Expected income for the month |
+    | **Expense Budget** | Currency | Maximum planned expenditure |
+    | **Shifts Planned** | Count | Number of shifts expected in the month |
+    | **Equipment Uptime Target** | Percentage (0–100) | Target uptime percentage for equipment |
+    | **Ore Extraction Target** | Tonnes | Expected ore tonnage for the month |
+
+    Fill in any combination of these fields and click **Save Targets**. You can return to previous months to review or update past targets. The last three months appear below the form as quick-access buttons.
+  </Tab>
+
+  <Tab title="Alert rules">
+    Alert rules let you define threshold conditions on operational data. When the `evaluate-alerts` function runs, it checks all enabled rules against live data and sends a notification when a threshold is breached.
+
+    Navigate to **Settings → Alert Rules** to manage rules for the active site.
+
+    ### Rule fields
+
+    | Field | Description |
+    |---|---|
+    | **Name** | A descriptive label for the rule (e.g., "Critical low stock") |
+    | **Entity** | The data type to monitor — Inventory Item, Equipment, or Safety Incident |
+    | **Field** | The specific field to check (`quantity`, `days_since_service`, `open_count`) |
+    | **Operator** | Comparison operator: `≤`, `≥`, `<`, `>`, or `=` |
+    | **Threshold** | The numeric value that triggers the rule |
+    | **Notification Title** | The title shown in the notifications panel when the rule fires |
+    | **Notification Body** | Optional detail text shown with the notification |
+
+    ### Quick-add presets
+
+    Three presets are available for common scenarios:
+
+    - **Low Inventory** — fires when any inventory item's quantity falls to 10 or below
+    - **Equipment Overdue for Service** — fires when equipment has not been serviced for 90 or more days
+    - **Open Safety Incidents** — fires when there is at least one unresolved safety incident
+
+    Click a preset chip to open the rule creation form pre-filled with those values. Adjust any field before saving.
+
+    ### Managing rules
+
+    Each rule card shows its current status (Active or Disabled), the condition summary, the notification title, and the last time it was triggered. Use the toggle button to enable or disable a rule without deleting it. Use the trash icon to permanently remove a rule.
+
+    Click **Run Now** to trigger an immediate evaluation of all active rules for the current site — useful after making bulk data changes.
+
+    <Note>
+    Alert rules require the `evaluate-alerts` Edge Function to be deployed. In self-hosted environments using Supabase, run `supabase functions deploy evaluate-alerts`. In REST mode, the backend must expose an equivalent evaluation endpoint.
+    </Note>
+  </Tab>
+
+  <Tab title="Expense categories">
+    Expense categories are org-wide labels used to classify transactions. They appear in the transaction form category picker, in report breakdowns, and in filter dropdowns across the platform.
+
+    Navigate to **Settings → Categories** to manage categories. Categories are split into two types:
+
+    - **Expenses** — cost items (e.g., Chemicals / Reagents, Fuel, Labour)
+    - **Income** — revenue items (e.g., Sales, Royalties, Contract Work)
+
+    Use the Expenses and Income tabs to switch between the two lists.
+
+    ### Creating a category
+
+    <Steps>
+      <Step title="Click Add Category">
+        Click **Add Category** in the top right of the Categories page.
+      </Step>
+      <Step title="Select the type">
+        Choose **Expense** or **Income** using the type toggle.
+      </Step>
+      <Step title="Enter a name and optional description">
+        Give the category a clear name. The description is optional and appears as a tooltip in the transaction form.
+      </Step>
+      <Step title="Choose a colour">
+        Pick from the preset colours or use the custom colour picker. The colour is used as a visual indicator in charts and category badges.
+      </Step>
+      <Step title="Save">
+        Click **Add Category**. The category is available immediately in all transaction forms across the organization.
+      </Step>
+    </Steps>
+
+    <Warning>
+    Deleting a category removes it from the category picker but does not delete transactions that used it. Those transactions will show no category until reassigned.
+    </Warning>
+  </Tab>
+
+  <Tab title="Profile">
+    Personal profile settings apply only to your own account and do not affect other users. Navigate to **Settings → Profile** to update your details.
+
+    | Field | Description |
+    |---|---|
+    | **Full name** | Your display name shown in user cards, audit log entries, and messages |
+    | **Phone** | Optional contact number — stored on your profile |
+    | **Avatar** | Profile photo uploaded to the `user-avatars` storage bucket |
+
+    To change your password, scroll to the **Change Password** section and enter a new password. This uses Supabase Auth and applies immediately.
+
+    <Note>
+    Avatar uploads require the `user-avatars` Supabase Storage bucket to exist with public access enabled. See the self-hosting setup guide for bucket configuration.
+    </Note>
+  </Tab>
+
+  <Tab title="Notifications">
+    FW Mining OS delivers all alert notifications to the in-app notifications panel, accessed via the bell icon in the top navigation bar.
+
+    Notifications are generated by:
+
+    - **Alert rules** — threshold breaches detected by the `evaluate-alerts` function
+    - **Low stock triggers** — automatic notifications when an inventory item's quantity drops below its reorder threshold
+    - **System events** — such as invitation confirmations and sync errors
+
+    Click any notification to mark it as read and navigate to the relevant record. Use **Mark all as read** to clear the unread count.
+
+    When using the Supabase backend, notifications are pushed in real time via Postgres Realtime. When using the REST backend, the app polls for new notifications every 8 seconds.
+  </Tab>
+
+  <Tab title="Sync history">
+    FW Mining OS supports offline operation — you can record transactions, update inventory, and log production without an active internet connection. Changes are stored locally and synced automatically when connectivity is restored.
+
+    Navigate to **Settings → Sync** to view the offline sync log. The log shows each pending and completed sync operation, including the record type, action, and timestamp.
+
+    If a sync operation fails (for example, due to a conflict or server error), it appears in the log with an error status. You can retry failed operations individually or clear them if the underlying data has already been corrected.
+  </Tab>
+</Tabs>

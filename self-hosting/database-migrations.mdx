@@ -1,0 +1,83 @@
+---
+title: 'Running database migrations for FW Mining OS (all 13)'
+description: 'Apply all 13 SQL migration files to your Supabase project in order to set up the complete FW Mining OS database schema and RLS policies.'
+---
+
+FW Mining OS uses sequential SQL migrations to build the database schema. All migration files live in `supabase/migrations/` and must be applied in order. Each file is idempotent — using `CREATE TABLE IF NOT EXISTS` and `CREATE OR REPLACE FUNCTION` — so re-running a file that has already been applied is safe.
+
+## How to run migrations
+
+<Tabs>
+  <Tab title="Supabase SQL Editor">
+    <Steps>
+      <Step title="Open the SQL Editor">
+        In your Supabase dashboard, go to **SQL Editor** and click **New query**.
+      </Step>
+      <Step title="Paste and run each file in order">
+        Copy the contents of `001_initial_schema.sql`, paste it into the editor, and click **Run**. Repeat for each migration file, in numeric order, waiting for each one to succeed before moving to the next.
+      </Step>
+      <Step title="Verify">
+        After all 13 files are applied, go to **Table Editor** and confirm the tables listed below are present.
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab title="Supabase CLI">
+    <Steps>
+      <Step title="Install the Supabase CLI">
+        ```bash
+        npm install -g supabase
+        ```
+      </Step>
+      <Step title="Link your project">
+        ```bash
+        supabase login
+        supabase link --project-ref <your-project-ref>
+        ```
+      </Step>
+      <Step title="Push all migrations">
+        ```bash
+        supabase db push
+        ```
+
+        The CLI applies all files in `supabase/migrations/` in numeric order and tracks which ones have already run.
+      </Step>
+    </Steps>
+  </Tab>
+</Tabs>
+
+## Migration reference
+
+The table below summarises every migration and what it introduces.
+
+| # | File | What it does |
+|---|---|---|
+| 001 | `001_initial_schema.sql` | Core tables: `organizations`, `sites`, `user_profiles`, `user_site_roles`, `suppliers`, `inventory_items`, `transactions`, `channels`, `orders`, `order_items`, `workers`, `shift_records`, `messages`, `campaigns`, `notifications`, `integration_configs`. Defines `current_org_id()` and `accessible_site_ids()` helper functions and enables RLS on all tables. |
+| 002 | `002_fix_rls_insert_policies.sql` | Adds missing `INSERT` policies needed for the sign-up flow: authenticated users can create an organisation, users can insert their own profile, org members can insert sites, and users can insert their own site role. |
+| 003 | `003_fix_rls_circular_deps.sql` | Rebuilds `current_org_id()` and `accessible_site_ids()` with `SECURITY DEFINER` to prevent recursive RLS evaluation. Adds a self-read policy on `user_profiles` and fixes a circular dependency on `user_site_roles`. |
+| 004 | `004_low_stock_notification_trigger.sql` | Adds the `notify_low_stock()` trigger on `inventory_items`. Fires after `quantity` is updated to at or below `reorder_level` and inserts a `warning` notification for every `admin` and `site_manager` at that site. |
+| 005 | `005_rls_audit.sql` | Audits and tightens RLS across all tables. Adds three helper functions — `is_org_member()`, `has_site_access()`, and `is_site_manager()` — and rewrites policies for `messages`, `campaigns`, `campaign_sites`, and `integration_configs` to use them. |
+| 006 | `006_phase6_schema.sql` | Phase 6 tables: `equipment`, `safety_incidents`, `planned_shifts`, `site_documents`. All have RLS enabled with site-member read and site-manager write policies. |
+| 007 | `007_audit_log.sql` | Adds the `audit_logs` table, the `log_audit_event()` trigger function, and attaches audit triggers to `inventory_items`, `transactions`, `equipment`, `safety_incidents`, `orders`, and `workers`. Records `old_data` and `new_data` as JSONB. |
+| 008 | `008_alert_rules.sql` | Adds the `alert_rules` table. Rules define threshold conditions (e.g. `quantity lte 10`) on `inventory_item`, `equipment`, or `safety_incident` entities. An Edge Function evaluates rules and fires notifications. |
+| 009 | `009_phase8_schema.sql` | Adds `kpi_targets` and `production_logs` tables. Adds `onboarding_completed` to `user_profiles` and `weekly_report_enabled` / `weekly_report_email` to `organizations`. |
+| 010 | `010_customers_schema.sql` | Adds `customers` and `expense_categories` tables. Extends `transactions` with `customer_id` and `expense_category_id` foreign keys. Seeds a default "Internal Operations" customer and five default expense categories per existing organisation. |
+| 011 | `011_org_module_config.sql` | Adds `disabled_modules jsonb` to `organizations`. A JSON array of module key strings (e.g. `["messages","campaigns"]`) lets admins disable feature modules org-wide. |
+| 012 | `012_signup_rpc.sql` | Creates the `handle_new_user_signup(user_id, full_name, org_name, org_slug)` RPC function. Atomically creates the organisation, profile, default site, and admin role in one transaction. Granted to both `anon` and `authenticated` roles. |
+| 013 | `013_inventory_write_offs.sql` | Adds the `inventory_write_offs` table for recording quantity adjustments due to damage, expiry, theft, or stocktake. Scoped to site access via RLS. |
+
+<Warning>
+Always run migrations in numeric order. Migration 003 rebuilds functions introduced in 001, and migration 005 depends on tables created in 006 being referenced correctly. Skipping or reordering migrations will cause errors.
+</Warning>
+
+## Verifying the schema
+
+After all migrations are applied, run this query in the SQL Editor to confirm all core tables exist:
+
+```sql
+SELECT table_name
+FROM information_schema.tables
+WHERE table_schema = 'public'
+ORDER BY table_name;
+```
+
+You should see: `alert_rules`, `audit_logs`, `campaigns`, `channels`, `customers`, `equipment`, `expense_categories`, `integration_configs`, `inventory_items`, `inventory_write_offs`, `kpi_targets`, `notifications`, `orders`, `order_items`, `organizations`, `planned_shifts`, `production_logs`, `shift_records`, `site_documents`, `sites`, `suppliers`, `transactions`, `user_profiles`, `user_site_roles`, `workers`.

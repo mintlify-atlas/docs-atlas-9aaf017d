@@ -1,0 +1,147 @@
+---
+title: "Core concepts: organizations, sites, roles, and modules"
+sidebarTitle: "Core concepts"
+description: "Learn how FW Mining OS structures your data — organizations, sites, role-based access, feature modules, and offline sync explained."
+icon: "map"
+---
+
+FW Mining OS is built around a small set of concepts that appear throughout the product. Understanding them makes every other feature easier to use. This page explains the data model, access control system, feature toggles, and offline behavior.
+
+## The hierarchy at a glance
+
+Every piece of data in FW Mining OS sits inside this structure:
+
+1. **Organization** — your company account; the root of everything
+2. **Sites** — physical mine locations that belong to your organization
+3. **Users with roles** — team members assigned to one or more sites with a specific role per site
+
+Most data — transactions, inventory items, production logs, workers, messages — is scoped to a **site**. Organization-level data (supplier records, campaigns, module settings) is shared across all sites.
+
+---
+
+## Concepts
+
+<CardGroup cols={2}>
+  <Card title="Organizations" icon="building">
+    The top-level tenant. Created when you register. Holds all your sites, users, and org-wide configuration.
+  </Card>
+  <Card title="Sites" icon="location-dot">
+    A physical mine location under your organization. Each site has its own transactions, inventory, team, and production logs.
+  </Card>
+  <Card title="Roles" icon="user-shield">
+    Four roles control what each user can see and do. Roles are assigned per user per site, not globally.
+  </Card>
+  <Card title="Modules" icon="toggle-on">
+    Feature flags at the organization level. Enable or disable product areas to simplify the UI for your team.
+  </Card>
+  <Card title="Offline-first sync" icon="wifi">
+    The app works without internet. Mutations are queued in IndexedDB and drained to the server when you reconnect.
+  </Card>
+  <Card title="Site context" icon="sidebar">
+    The sidebar shows a site selector. Switching sites changes which data is displayed across all pages.
+  </Card>
+</CardGroup>
+
+---
+
+## Organizations
+
+When you register, FW Mining OS creates one organization linked to your account. The organization is your top-level tenant — it owns all sites, users, suppliers, campaigns, and module settings.
+
+Key facts about organizations:
+
+- **One organization per registration.** You cannot merge organizations or move sites between them.
+- **Org-level data** (suppliers, campaigns, sales channels, module config) is shared across all sites.
+- **Site-level data** (transactions, inventory, workers, messages, production logs) is isolated per site.
+- Admins can edit the organization name and logo in **Settings → Organization**.
+
+---
+
+## Sites
+
+A site represents a physical mine location — a pit, a processing facility, or a regional office. You can have as many sites as your plan allows.
+
+Each site has:
+
+- A **name**, **location** (free text), **timezone**, and **status** (`active`, `inactive`, or `decommissioned`)
+- Its own isolated copy of: transactions, inventory items, workers, shift records, production logs, orders, messages, and safety incidents
+- Its own team — users are added to sites individually and can have different roles on different sites
+
+The **site selector** in the sidebar sets the active site. Every page that shows site-scoped data — Transactions, Inventory, Team, Production, Safety — reflects the currently active site.
+
+<Note>
+  Decommissioning a site hides it from the site selector but preserves all its historical data. You can reactivate a decommissioned site from **Settings → Organization**.
+</Note>
+
+---
+
+## Roles
+
+Roles control what a user can see and do within a site. They are set per user per site, so the same person can be an admin on one site and a viewer on another.
+
+| Role | Access level |
+|---|---|
+| `admin` | Full access to all org and site settings, all data, invite and remove members, manage roles |
+| `site_manager` | Full access to site data (transactions, inventory, team, production), cannot change org settings or manage other admins |
+| `worker` | Can record data (log transactions, update inventory, submit production logs, report safety incidents) but cannot manage settings or team |
+| `viewer` | Read-only access to all site data; cannot create, edit, or delete any records |
+
+When you register, you are automatically assigned the `admin` role on your organization's default site. When you invite a new member, you choose their role at the time of invitation. Admins can change roles at any time from the **Team** page.
+
+---
+
+## Modules
+
+Modules are feature flags that control which product areas are visible to your entire organization. Disabling a module hides its navigation items and pages for all users — it does not delete any underlying data.
+
+The available modules are:
+
+| Module | What it covers |
+|---|---|
+| `messages` | In-app messaging across general, safety, and operations channels |
+| `campaigns` | Org-level marketing and communication campaigns |
+| `customers` | Customer records, contact management, and per-customer reporting |
+| `reports` | Income, expense, inventory, and customer reports with export |
+| `team` | Worker profiles, shift scheduling, and timesheet records |
+| `supply_chain` | Suppliers, sales channels, and purchase orders |
+| `operations` | Equipment management, safety incidents, and production logs |
+
+Toggle modules in **Settings → System**. Changes apply immediately to all users in your organization.
+
+<Tip>
+  If your operation is purely internal — no customer-facing sales and no supplier orders — disable `customers`, `campaigns`, and `supply_chain` to reduce navigation clutter for your team.
+</Tip>
+
+---
+
+## Offline-first sync
+
+FW Mining OS is designed to work in remote mine sites where internet connectivity is unreliable. The app stores a local copy of your data in the browser using IndexedDB (via Dexie) and queues any changes you make while offline.
+
+**How it works:**
+
+1. When you open the app, it loads data from the local cache instantly — no waiting for network requests.
+2. If you create or update a record while offline, it is saved locally and added to the sync queue.
+3. When your connection is restored, the sync engine drains the queue and sends all pending mutations to the Supabase backend.
+4. The app updates the local cache with the server's confirmed response.
+
+**Conflict resolution** — if a record was modified both locally and on the server while you were offline, FW Mining OS resolves the conflict using a deterministic rule:
+
+- **Server wins:** transactions, safety incidents
+- **Client wins:** inventory items, production logs
+
+<Info>
+  You can inspect the sync queue and review past sync events in **Settings → Sync History**. If a mutation fails after reconnecting (for example, due to a validation error on the server), it appears in the failed queue and can be retried or discarded manually.
+</Info>
+
+---
+
+## Site context and the sidebar
+
+The sidebar is the primary navigation surface in FW Mining OS. It contains:
+
+- **Site selector** — a dropdown at the top that shows all sites you have access to. Switching sites reloads all site-scoped pages to show data for the selected site.
+- **Module navigation** — links to enabled modules only; disabled modules do not appear.
+- **Settings** — always visible, but some settings sections (Organization, System) are only accessible to admins.
+
+Your active site is persisted in `localStorage` so the same site is pre-selected the next time you log in on the same device.

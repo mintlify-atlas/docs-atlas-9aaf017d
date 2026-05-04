@@ -1,0 +1,120 @@
+---
+title: 'Inventory tracking, consumption, and write-offs'
+description: 'Track stock levels, log consumption with automatic expense creation, record write-offs, and get alerts when quantities fall below reorder thresholds.'
+---
+
+The Inventory module tracks every consumable, spare part, and supply used on your mine site. When you log consumption of a costed item, the platform automatically creates a matching expense transaction — keeping your financials in sync without double entry.
+
+<CardGroup cols={2}>
+  <Card title="Stock management" icon="boxes-stacked">
+    Add items, edit quantities, and delete records. Filter by category and search by name or SKU.
+  </Card>
+  <Card title="Consumption logging" icon="arrow-down">
+    Deduct stock and auto-create an expense transaction in one action.
+  </Card>
+  <Card title="Write-offs" icon="triangle-exclamation">
+    Record damaged, expired, stolen, or stocktake-adjusted stock with a reason code and audit trail.
+  </Card>
+  <Card title="Low-stock alerts" icon="bell">
+    Automatic alerts when quantity falls at or below the reorder level. Days-to-stockout estimated from 30-day usage.
+  </Card>
+</CardGroup>
+
+## Item field reference
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `name` | string | **Yes** | Display name of the inventory item |
+| `category` | string | No | Grouping label (e.g. "PPE", "Fuel", "Chemicals") |
+| `sku` | string | No | Internal stock-keeping unit code |
+| `quantity` | number | **Yes** | Current stock level; must be ≥ 0 |
+| `unit` | string | No | Unit of measure (e.g. `pcs`, `kg`, `L`) |
+| `unit_cost` | number | No | Cost per unit; drives automatic expense creation on consumption |
+| `reorder_level` | number | No | Quantity threshold that triggers a low-stock alert |
+| `supplier_id` | UUID | No | Links to a supplier record |
+
+<Tip>
+  Set `unit_cost` on any item you want to appear in cost-of-operations reports. Items with no unit cost can still be tracked for quantity purposes.
+</Tip>
+
+## Adding and editing items
+
+<Steps>
+  <Step title="Open the Add Item form">
+    Click **Add Item** in the top-right corner of the Inventory page.
+  </Step>
+  <Step title="Fill in item details">
+    Enter a name (required) and optionally a category, SKU, unit, unit cost, and reorder level.
+  </Step>
+  <Step title="Set the opening quantity">
+    Enter the current stock count. This is the starting balance for all future consumption and write-off calculations.
+  </Step>
+  <Step title="Save">
+    Click **Add Item**. The item appears in the table immediately with its stock status badge.
+  </Step>
+</Steps>
+
+To edit an existing item, click the pencil icon in the item's row. To remove it permanently, click the trash icon and confirm deletion.
+
+## Logging consumption
+
+Use the **Use** button in an item's row to deduct stock and optionally record the cost as an expense transaction.
+
+<Steps>
+  <Step title="Click Use on the item">
+    In the item's row, click the **Use** button (amber, with a package-search icon).
+  </Step>
+  <Step title="Enter quantity used">
+    Enter a value between 1 and the current stock level.
+  </Step>
+  <Step title="Optionally link a customer and expense category">
+    Select a customer if the consumption is attributable to a specific job, and an expense category if your chart of accounts requires it.
+  </Step>
+  <Step title="Add notes (optional)">
+    Describe the context, e.g. "Used for leaching circuit — pump overhaul".
+  </Step>
+  <Step title="Confirm">
+    Click **Log Usage**. The platform deducts the quantity from stock. If `unit_cost > 0`, a `source: "inventory"` expense transaction is created automatically for `quantity × unit_cost`.
+  </Step>
+</Steps>
+
+<Note>
+  Inventory-sourced expense transactions appear in the Transactions page and count toward Dashboard KPIs just like manually entered expenses. Their `source` field is set to `"inventory"` so you can filter them separately.
+</Note>
+
+## Writing off stock
+
+Write-offs record stock that has been lost without generating recoverable value — damaged goods, expired materials, theft, or stocktake adjustments.
+
+<Warning>
+  Write-offs are irreversible. Once submitted, the quantity is permanently deducted from stock and the record is stored in the `inventory_write_offs` audit table. If you made a mistake, add the quantity back by editing the item's stock level directly.
+</Warning>
+
+Click the **Write Off** button in an item's row to open the write-off form.
+
+**Reason codes**
+
+| Code | When to use |
+|---|---|
+| `damaged` | Item was broken, crushed, or otherwise rendered unusable |
+| `expired` | Shelf-life exceeded (reagents, consumables, food) |
+| `theft` | Stock found missing and attributed to theft |
+| `stocktake` | Discrepancy found during a physical count |
+
+Write-offs are reported in **Reports → Inventory Write-offs** with date, quantity, unit cost, total value lost, reason, and notes.
+
+## Low-stock alerts
+
+A low-stock alert fires when an item's quantity is at or below its `reorder_level`. The Inventory page header displays a count of affected items, and each affected row shows an amber **Low Stock** badge. Items at zero show a red **Out of Stock** badge.
+
+The **days-to-stockout** estimate (shown under the item name) is computed from a 30-day rolling consumption average. A red chip means fewer than 7 days of stock remain; amber means fewer than 30 days.
+
+## CSV import and export
+
+**Export CSV** — downloads all currently visible items with columns: Name, Category, SKU, Quantity, Unit, Unit Cost, Reorder Level.
+
+**Import CSV** — bulk-creates items from a spreadsheet. Required columns: `Name`, `Quantity`. Optional: `Category`, `SKU`, `Unit`, `Unit Cost`, `Reorder Level`.
+
+<Note>
+  **Offline behaviour:** Create, update, and delete operations are queued when your device is offline and replayed when connectivity returns. Conflict resolution uses client-wins for inventory — your local changes are applied on top of any server state. This differs from transactions, which use server-wins.
+</Note>

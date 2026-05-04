@@ -1,0 +1,119 @@
+{
+  "projectType": "saas",
+  "projectName": "FW Mining OS",
+  "projectDescription": "A full-stack mining operations management platform for tracking finances, inventory, production, team shifts, safety incidents, and supply chain across multiple mine sites.",
+  "theme": "almond",
+  "primaryColor": "#7b7a90",
+  "lightColor": "#cac9d1",
+  "darkColor": null,
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "concepts"
+            ]
+          },
+          {
+            "group": "Core Features",
+            "pages": [
+              "features/dashboard",
+              "features/transactions",
+              "features/inventory",
+              "features/production"
+            ]
+          },
+          {
+            "group": "Operations",
+            "pages": [
+              "operations/team",
+              "operations/safety",
+              "operations/equipment",
+              "operations/supply-chain"
+            ]
+          },
+          {
+            "group": "Customers & Reports",
+            "pages": [
+              "reporting/customers",
+              "reporting/reports",
+              "reporting/documents"
+            ]
+          },
+          {
+            "group": "Administration",
+            "pages": [
+              "admin/organization",
+              "admin/roles-permissions",
+              "admin/settings",
+              "admin/integrations"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Self-Hosting",
+        "groups": [
+          {
+            "group": "Deployment",
+            "pages": [
+              "self-hosting/overview",
+              "self-hosting/supabase-setup",
+              "self-hosting/database-migrations",
+              "self-hosting/environment-variables"
+            ]
+          },
+          {
+            "group": "Advanced",
+            "pages": [
+              "self-hosting/offline-sync",
+              "self-hosting/rls-policies"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Multi-site financial dashboard with KPI tracking and trend analysis",
+    "Transaction management with income, expense, and refund categorization",
+    "Inventory management with offline-first sync and consumption tracking",
+    "Production log tracking per mining site",
+    "Team management with shift scheduling and timesheet tracking",
+    "Safety incident reporting and resolution tracking",
+    "Equipment maintenance and service scheduling",
+    "Supply chain management (suppliers, channels, purchase orders)",
+    "Customer CRM with profitability reporting",
+    "PDF and CSV report exports",
+    "Offline-first architecture with background sync engine",
+    "Multi-tenant organization and role-based access control"
+  ],
+  "publicApiSurface": [
+    "getTransactions(siteId, filters?)",
+    "createTransaction(siteId, payload, createdBy?)",
+    "getInventoryItems(siteId)",
+    "createInventoryItem(siteId, payload)",
+    "consumeInventoryItem(siteId, item, qty, opts?)",
+    "writeOffInventoryItem(siteId, item, qty, reason, notes, userId?)",
+    "getSafetyIncidents(siteId)",
+    "getEquipment(siteId)",
+    "getWorkers(siteId)",
+    "getPlannedShifts(siteId, from, to)",
+    "getKpiTargets(siteId, months)",
+    "getMonthlyTrend(siteId, from, to)",
+    "getExpensesByCategory(siteId, from, to, customerId?)",
+    "getIncomeByCategory(siteId, from, to, customerId?)",
+    "getCustomerSummaries(siteId, from, to)",
+    "initSyncEngine()",
+    "drainQueue(onProgress?)",
+    "registerHandler(entity, operation, fn)",
+    "useOrgModules()",
+    "usePendingCount()",
+    "useSyncLog(limit?)"
+  ]
+}

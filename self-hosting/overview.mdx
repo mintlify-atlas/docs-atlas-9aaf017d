@@ -1,0 +1,98 @@
+---
+title: 'Self-hosting FW Mining OS on your own infrastructure'
+description: 'Deploy FW Mining OS on your own infrastructure: Supabase for the backend, Vercel or any static host for the frontend, with full offline PWA support.'
+---
+
+FW Mining OS is a full-stack PWA that you control end-to-end. The frontend is a React + Vite application that ships as static files and can be hosted anywhere, while the backend is a Supabase project that you provision in your own account. This page walks you through the big picture; the linked sub-pages cover each step in detail.
+
+## Stack overview
+
+| Layer | Technology |
+|---|---|
+| Frontend | React 18, Vite, Tailwind CSS, PWA (via vite-plugin-pwa) |
+| Backend | Supabase (PostgreSQL, Auth, Storage, Realtime) |
+| Offline sync | Dexie (IndexedDB), Background Sync API |
+| Hosting | Vercel (recommended) or any static file host |
+
+## Prerequisites
+
+Before you begin, make sure you have the following:
+
+- **Node.js 18+** — required to build the frontend
+- **Bun** — used for local development (`bun install`, `bun run dev`)
+- **Supabase account** — [supabase.com](https://supabase.com); the free tier is sufficient to start
+- **Vercel account** (optional) — recommended for zero-config deployment with SPA routing support
+
+## Deployment steps
+
+<Steps>
+  <Step title="Create your Supabase project">
+    Create a new Supabase project, copy the Project URL and anon key, and configure Auth. See [Setting up Supabase](/self-hosting/supabase-setup) for the full walkthrough.
+  </Step>
+  <Step title="Run database migrations">
+    Apply all 13 migration files in order using the Supabase SQL Editor or the Supabase CLI. See [Running database migrations](/self-hosting/database-migrations).
+  </Step>
+  <Step title="Configure environment variables">
+    Create a `.env.local` file for local development, or set environment variables in your hosting provider for production. See [Environment variables reference](/self-hosting/environment-variables).
+  </Step>
+  <Step title="Build and deploy the frontend">
+    Run `bun run build` to produce the `dist/` directory, then deploy it to Vercel or upload it to your static host.
+  </Step>
+  <Step title="Verify offline sync">
+    Open the app on a mobile device or simulate offline mode in DevTools. Mutations should queue locally and drain when connectivity is restored. See [How offline sync works](/self-hosting/offline-sync).
+  </Step>
+</Steps>
+
+## vercel.json configuration
+
+The repository includes a `vercel.json` that handles SPA routing and security headers. No changes are needed for a standard deployment.
+
+```json vercel.json
+{
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" },
+        { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" },
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https://*.supabase.co; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
+        }
+      ]
+    }
+  ]
+}
+```
+
+The rewrite rule sends every request to `index.html`, which is required for client-side routing. The CSP explicitly allows connections to `*.supabase.co` and `wss://*.supabase.co` for Realtime. If you host Supabase on a custom domain, update these values accordingly.
+
+<Note>
+If you deploy to a host other than Vercel, configure an equivalent catch-all rewrite rule to support client-side routing. Without it, direct URL navigation will return 404.
+</Note>
+
+## Sub-pages
+
+<CardGroup cols={2}>
+  <Card title="Setting up Supabase" icon="database" href="/self-hosting/supabase-setup">
+    Create a project, enable Auth, configure redirect URLs, and enable Realtime.
+  </Card>
+  <Card title="Database migrations" icon="layers" href="/self-hosting/database-migrations">
+    Run all 13 migration files in the correct order.
+  </Card>
+  <Card title="Environment variables" icon="sliders" href="/self-hosting/environment-variables">
+    Full reference for every environment variable the app reads.
+  </Card>
+  <Card title="Offline sync" icon="wifi-off" href="/self-hosting/offline-sync">
+    How the IndexedDB queue, conflict resolution, and Background Sync API work together.
+  </Card>
+  <Card title="RLS policies" icon="shield" href="/self-hosting/rls-policies">
+    Row-level security design, helper functions, and guidance for custom tables.
+  </Card>
+</CardGroup>

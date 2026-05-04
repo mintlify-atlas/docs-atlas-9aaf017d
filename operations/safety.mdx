@@ -1,0 +1,101 @@
+---
+title: "Reporting and tracking safety incidents on site"
+description: "Log safety incidents with severity and type classification, track open versus resolved status, and monitor critical incidents from the site dashboard."
+---
+
+The Safety module provides a structured incident register for mining sites. Every incident — from a near-miss to a critical injury — can be logged with a severity level, incident type, description, and actions taken. The dashboard surfaces open and critical incident counts so site managers can stay on top of compliance obligations in real time.
+
+## Severity levels
+
+Severity determines how prominently an incident is flagged across the platform.
+
+| Severity | When to use |
+|----------|-------------|
+| `low` | Minor hazard or observation with no injury or equipment damage. Requires documentation but no immediate escalation. |
+| `medium` | Event with potential for injury or minor property damage. Requires corrective action within a defined timeframe. |
+| `high` | Incident involving injury, significant equipment damage, or a regulatory near-miss. Requires immediate management review. |
+| `critical` | Serious injury, fatality, major environmental release, or regulatory breach. Triggers emergency response. Critical open incidents are highlighted in red on the dashboard. |
+
+## Incident types
+
+| Type | Description |
+|------|-------------|
+| `near-miss` | An unplanned event that did not result in injury or damage but had the potential to do so. |
+| `injury` | An incident resulting in physical harm to a worker. |
+| `equipment` | Equipment failure, damage, or unsafe condition. |
+| `environmental` | Spill, emission, or other event with environmental impact. |
+| `other` | Any incident that does not fit the above categories. |
+
+## Logging a new incident
+
+<Steps>
+  <Step title="Open the Safety page">
+    Navigate to **Safety** in the sidebar. Click **Log Incident** in the top-right corner.
+  </Step>
+  <Step title="Enter the incident title">
+    Write a concise **Title** that identifies what happened, e.g. "Hydraulic fluid spill near crusher". This is the only required field.
+  </Step>
+  <Step title="Set severity and type">
+    Select the appropriate **Severity** (`low`, `medium`, `high`, or `critical`) and **Type** (`near-miss`, `injury`, `equipment`, `environmental`, or `other`). Both default to the lowest category — adjust before saving.
+  </Step>
+  <Step title="Describe the incident">
+    In **Description**, record what happened, where it occurred, the time, and the people involved. Be factual and specific — this field forms part of the compliance record.
+  </Step>
+  <Step title="Record actions taken">
+    Use **Actions Taken** to document the immediate response, any corrective measures applied, and follow-up tasks required.
+  </Step>
+  <Step title="Submit the report">
+    Click **Log Incident**. The incident is saved immediately and appears at the top of the incident list. The dashboard counters for open and critical incidents update automatically.
+  </Step>
+</Steps>
+
+<Note>
+  Incidents can be logged while offline. The record is queued locally and synced to the server automatically when connectivity is restored.
+</Note>
+
+## Marking an incident resolved
+
+An incident is resolved when all corrective actions have been completed and no further follow-up is needed.
+
+<Steps>
+  <Step title="Find the incident">
+    On the Safety page, use the status filter to show **Open only** incidents, or search by title or description.
+  </Step>
+  <Step title="Click Resolve">
+    Click the **Resolve** button on the incident row. The system records the current timestamp as `resolved_at`.
+  </Step>
+  <Step title="Confirm the resolution">
+    The incident status badge changes from **Open** to **Resolved** and the open incident counter on the dashboard decrements.
+  </Step>
+</Steps>
+
+<Tip>
+  Use the **Status** filter to toggle between all incidents, open only, and resolved only. Combine it with the **Severity** filter to focus on critical open items.
+</Tip>
+
+## Dashboard integration
+
+The Site Status strip on the dashboard shows two safety indicators:
+
+- **Open Incidents** — the count of all incidents without a `resolved_at` timestamp. Shown in orange when greater than zero.
+- **Critical (Open)** — the count of open incidents with `severity = critical`. Shown in red when greater than zero.
+
+Low-stock inventory alerts also appear in the notifications system alongside safety incident alerts, keeping operational and safety signals in a single feed.
+
+## Conflict resolution and offline sync
+
+<Warning>
+  Safety incidents use a **server-wins** conflict resolution strategy. If you edit an incident while offline and the server record has changed by the time you reconnect, the server version takes precedence and your local edits are discarded. This behavior is intentional — safety records are compliance-critical and must reflect the authoritative server state. Always confirm resolutions and edits while online when possible.
+</Warning>
+
+Incident field reference:
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `title` | text | Yes | Short description of the incident |
+| `severity` | enum | Yes | `low`, `medium`, `high`, or `critical` |
+| `type` | enum | Yes | `near-miss`, `injury`, `equipment`, `environmental`, or `other` |
+| `description` | text | No | Full narrative of what occurred |
+| `actions_taken` | text | No | Response and corrective actions |
+| `reported_by` | uuid | No | User ID of the person who logged the report |
+| `resolved_at` | timestamptz | No | Set automatically when **Resolve** is clicked; `null` means open |

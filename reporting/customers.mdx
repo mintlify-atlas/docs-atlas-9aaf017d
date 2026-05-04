@@ -1,0 +1,89 @@
+---
+title: "Customer CRM, contracts, and profitability tracking"
+description: "Manage external and internal customers, track per-customer income and expenses, and view live net profit breakdowns from your transaction ledger."
+---
+
+The Customers module acts as a lightweight CRM built directly into your mining site's financial workflow. Every customer record ties to the same transaction ledger your site uses for income and expenses, so profitability figures are always live — no manual reconciliation needed.
+
+## Customer fields
+
+Each customer record stores the following fields.
+
+| Field | Required | Description |
+|---|---|---|
+| `name` | Yes | Display name for the customer or company. |
+| `type` | Yes | `External` — third-party clients. `Internal` — company-owned cost centres. |
+| `status` | Yes | `Active`, `Inactive`, or `Completed`. |
+| `contact_name` | No | Name of the primary contact person. |
+| `contact_email` | No | Email address for the contact. |
+| `contact_phone` | No | Phone number for the contact. |
+| `contract_start` | No | Start date of the time-based contract (if applicable). |
+| `contract_end` | No | End date of the contract. Leave blank for open-ended arrangements. |
+| `daily_rate` | No | Daily billing rate in your site currency. Required to use the Charge Daily Rent action. |
+| `notes` | No | Free-text notes visible in the customer detail view. |
+
+<Note>
+The **type** field controls how the customer appears in the Reports "By Customer" tab. Internal customers (for example, the default `Internal Operations` cost centre) are kept separate from revenue-generating external clients.
+</Note>
+
+## Adding a customer
+
+<Steps>
+  <Step title="Open the Customers page">
+    Navigate to **Customers** in the sidebar. The page header shows financial metrics for the current calendar month.
+  </Step>
+  <Step title="Click Add Customer">
+    Select **Add Customer** in the top-right corner to open the customer form.
+  </Step>
+  <Step title="Fill in the required fields">
+    Enter the customer **Name**, choose a **Type** (`External` or `Internal`), and set the **Status** (`Active`, `Inactive`, or `Completed`).
+
+    Optionally add contact details — name, email, and phone — so they are visible in the customer list and detail view.
+  </Step>
+  <Step title="Enable a time-based contract (optional)">
+    Toggle **Time-based contract** on if the customer is billed at a fixed daily rate. This reveals the **Contract Start**, **Contract End** (optional), and **Daily Rate** fields.
+
+    Once a daily rate is set, a receipt icon appears in the customer list row. Click it to open the **Charge Daily Rent** modal and create a dated income transaction for any number of days.
+  </Step>
+  <Step title="Save the customer">
+    Click **Add Customer** to save. The customer appears in the list and is immediately available as a filter in the Transactions and Reports pages.
+  </Step>
+</Steps>
+
+## Customer statuses
+
+| Status | Meaning |
+|---|---|
+| `Active` | Current customer with ongoing transactions. |
+| `Inactive` | Customer on hold or no longer transacting. |
+| `Completed` | Contract or engagement has concluded. |
+
+## Customer list and filtering
+
+The customer list supports filtering by **type**, **status**, and a free-text search that matches on customer name, contact name, and contact email. The **Net Revenue** column shows that customer's income minus expenses for the current month, sourced live from the transaction ledger.
+
+Click any row to open the customer detail view.
+
+## Customer detail view
+
+The detail page for each customer (`/customers/:id`) provides a full financial picture for any date range you choose.
+
+**KPI strip** — Five cards show Total Income, Total Expenses, Net Profit, Revenue per Day, and Days Worked (days on which at least one income transaction was recorded).
+
+**Expense Breakdown** — A donut chart showing expenses grouped by category for the selected period. A **View detail** link leads to the full expense breakdown report scoped to that customer (`/customers/:id/expenses`).
+
+**Income Breakdown** — A donut chart of income by category. Falls back to a monthly income vs. expenses bar chart if no category data exists.
+
+**Transaction table** — All transactions linked to the customer for the period, searchable by description, reference number, and category.
+
+**Quick actions** — The **Add Income** and **Add Expense** buttons open a modal to log a transaction directly against the customer without navigating away. **Use Inventory** lets you consume stock items and attribute the cost to the customer.
+
+## Customer profitability in Reports
+
+Aggregated customer summaries are also available in the **Reports** page under the **By Customer** tab. Each card shows income, expenses, net profit, transaction count, and a category-level expense breakdown. Click **View report →** to open a dedicated per-customer report at `/reports/customers/:id`.
+
+The same data feeds the PDF financial report — a **Customer Profitability** section is included automatically whenever customer-linked transactions exist for the selected period.
+
+<Tip>
+On the Dashboard, switch the view mode to **Per Customer** to see a side-by-side income and expense breakdown for every customer in the current period without leaving the main overview.
+</Tip>

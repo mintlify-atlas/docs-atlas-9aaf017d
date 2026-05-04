@@ -1,0 +1,84 @@
+---
+title: 'Setting up your Supabase project for FW Mining OS'
+description: 'Create a Supabase project, configure the Auth email provider and redirect URLs, enable Realtime, set up the Storage bucket, and understand the signup RPC.'
+---
+
+FW Mining OS uses Supabase for its PostgreSQL database, user authentication, real-time messaging, and file storage. This page walks through every configuration step you need to complete in the Supabase dashboard before the application will work correctly.
+
+## Create a Supabase project
+
+<Steps>
+  <Step title="Sign in to Supabase">
+    Go to [supabase.com](https://supabase.com) and sign in or create a free account.
+  </Step>
+  <Step title="Create a new project">
+    Click **New project**, choose your organisation, give the project a name, set a strong database password, and select the region closest to your users. Save the database password in your password manager — you will need it for CLI access.
+  </Step>
+  <Step title="Copy your API credentials">
+    Once the project is ready, go to **Settings → API** and copy:
+
+    - **Project URL** — looks like `https://abcdefghijklmnop.supabase.co`
+    - **anon public** key — a long JWT starting with `eyJ`
+
+    These become your `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` environment variables.
+
+    ```bash .env.local
+    VITE_SUPABASE_URL=https://abcdefghijklmnop.supabase.co
+    VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+    ```
+  </Step>
+  <Step title="Configure the Auth email provider">
+    Go to **Authentication → Providers** and confirm that **Email** is enabled. The defaults (email + password sign-up) are correct for FW Mining OS.
+  </Step>
+  <Step title="Set Auth URL configuration">
+    Go to **Authentication → URL Configuration** and fill in the following:
+
+    | Setting | Value |
+    |---|---|
+    | Site URL | Your production domain, e.g. `https://mining.example.com` |
+    | Redirect URLs | Add `https://mining.example.com/accept-invite` and `https://mining.example.com/forgot-password` |
+
+    For local development, also add `http://localhost:8080/accept-invite` and `http://localhost:8080/forgot-password` to the redirect URLs list.
+
+    <Note>
+      Supabase will refuse to redirect to any URL not listed here. If users see "redirect_uri_mismatch" errors during password reset or invite flows, check this list first.
+    </Note>
+  </Step>
+  <Step title="Enable Realtime for messages and notifications">
+    Go to **Database → Replication** and enable replication for the following tables:
+
+    - `messages`
+    - `notifications`
+
+    These are the two tables that use Supabase Realtime for live updates in the messaging and notification features.
+  </Step>
+  <Step title="Create the site-documents Storage bucket">
+    Go to **Storage** and create a new bucket named `site-documents`. Set the bucket to **private** (not public). The application uses signed URLs to serve files, so public access is not required.
+
+    RLS policies on the `site_documents` table (created in migration 006) control which users can upload and read files within the bucket.
+  </Step>
+  <Step title="Run database migrations">
+    Your Supabase project is now configured. The next step is to apply the database migrations. See [Running database migrations](/self-hosting/database-migrations).
+  </Step>
+</Steps>
+
+## The signup_with_org RPC
+
+Migration 012 creates a server-side RPC function called `handle_new_user_signup`. The frontend calls this function immediately after `auth.signUp()` to atomically create the new user's organisation, profile, default site, and admin role assignment — all in a single transaction.
+
+The function runs with `SECURITY DEFINER` so it can bypass RLS during initial setup. It includes two guards to prevent abuse:
+
+- The corresponding `auth.users` row must have been created within the last 10 minutes.
+- The function raises an exception if a profile for that user already exists, preventing double-invocation on retries.
+
+Both the `anon` and `authenticated` Supabase roles are granted `EXECUTE` on this function, which supports both the email-confirmation flow (no session yet) and direct sign-up.
+
+```sql
+-- Called from the client after auth.signUp()
+SELECT handle_new_user_signup(
+  p_user_id   => '<uuid from auth.signUp response>',
+  p_full_name => 'Frank Wallace',
+  p_org_name  => 'FW Mining Ltd',
+  p_org_slug  => 'fw-mining-ltd'
+);
+```

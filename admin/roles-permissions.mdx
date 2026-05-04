@@ -1,0 +1,92 @@
+---
+title: "User roles and permissions across sites"
+description: "Understand the four built-in roles in FW Mining OS, how per-site role assignments work, and how to invite team members and manage their access."
+---
+
+FW Mining OS uses role-based access control at the site level. Every user is assigned a role on each site they belong to — a person can be a site manager at one mine and a viewer at another. Roles are managed from **Management → Roles & Permissions**, which is accessible to admins only.
+
+<Warning>
+The **Admin** role grants full organization-wide access, including the ability to manage users, change org settings, view all sites, and enable or disable modules. Assign this role only to users who should have unrestricted control over the account.
+</Warning>
+
+## Role reference
+
+| Role | Scope | Key permissions |
+|---|---|---|
+| **Admin** | Entire organization | Manage org settings, all sites, all users, modules, and billing |
+| **Site Manager** | Assigned site(s) | Add/remove workers, edit inventory, approve orders, view all site data |
+| **Worker** | Assigned site(s) | Log transactions, record production, report safety incidents, clock in/out of shifts |
+| **Viewer** | Assigned site(s) | Read-only access to all data on their assigned sites |
+
+### Permission details by role
+
+**Admin**
+- Access every site in the organization without an explicit site assignment
+- Invite and remove users; change any user's role on any site
+- Enable or disable org modules in System Settings
+- View and export the audit log for any site
+- Manage integration configurations
+
+**Site Manager**
+- Manage team members and role assignments on their site(s)
+- Create and edit inventory items, equipment records, and supplier orders
+- Configure alert rules and KPI targets for their site
+- Access all financial, production, and safety data for their site
+
+**Worker**
+- Record new transactions (income and expenses)
+- Update inventory consumption and receive stock
+- Log daily production figures
+- Report safety incidents and update their status
+- Clock in and out on assigned shifts
+
+**Viewer**
+- View dashboards, transactions, inventory, production, and reports
+- Cannot create, edit, or delete any records
+
+## Roles are per-site
+
+Role assignments are stored in the `user_site_roles` table — one row per user per site. A user without a role on a given site cannot see or access it. Admins are the only role that bypasses this restriction.
+
+## Inviting a team member
+
+<Steps>
+  <Step title="Open Roles & Permissions">
+    Go to **Management → Roles & Permissions**. You must be an admin to access this page.
+  </Step>
+  <Step title="Click Invite Member">
+    Click the **Invite Member** button in the top right. The invitation dialog opens.
+  </Step>
+  <Step title="Enter the email address">
+    Type the invitee's email address. An invitation email is sent to this address.
+  </Step>
+  <Step title="Select the site and role">
+    Choose which site to assign the user to and select their initial role. You can update this later.
+  </Step>
+  <Step title="Send the invitation">
+    Click **Send Invitation**.     The user receives an email with a link to the **Accept Invite** page. Once they complete registration, their role assignment takes effect immediately.
+  </Step>
+</Steps>
+
+## Changing a user's role
+
+<Steps>
+  <Step title="Find the user">
+    Go to **Management → Roles & Permissions** and locate the user card.
+  </Step>
+  <Step title="Change the role">
+    In the user's card, find the site row you want to update. Use the role dropdown next to the site name to select a new role. The change is saved immediately.
+  </Step>
+</Steps>
+
+<Note>
+You cannot change your own role. If you need to change your own access level, ask another admin to do it.
+</Note>
+
+## Removing a user from a site
+
+In the user card on the Roles & Permissions page, click the **×** button next to a site assignment to remove the user from that site. The user retains their access to any other sites where they hold a role.
+
+## Audit log
+
+Every action taken in FW Mining OS — creating records, updating inventory, changing roles — is written to an immutable audit trail. Go to **Management → Audit Log** to review events. You can filter by entity type (inventory item, transaction, equipment, safety incident, order, worker) and action (create, update, delete). For update events, the log shows a field-level diff of what changed.

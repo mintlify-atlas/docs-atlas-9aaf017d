@@ -1,0 +1,92 @@
+---
+title: "Equipment tracking and maintenance scheduling"
+description: "Track mining assets by status, log service history, schedule next service dates, and get alerted when equipment is overdue for maintenance."
+---
+
+The Equipment module is an asset register for your mine site. Each piece of equipment — from excavators and drills to haul trucks and pumps — has a record that tracks its operational status, serial number, service history, and next scheduled service date. The dashboard surfaces overdue service counts so nothing gets missed.
+
+## Equipment statuses
+
+| Status | Meaning |
+|--------|---------|
+| `operational` | The asset is in service and available for use. |
+| `maintenance` | The asset is currently out of service for scheduled or unscheduled maintenance. |
+| `retired` | The asset has been decommissioned. Retired equipment is excluded from overdue service calculations. |
+
+## Dashboard indicators
+
+The site dashboard equipment strip shows three counts:
+
+- **Operational** — equipment with `status = operational`.
+- **In Maintenance** — equipment with `status = maintenance`.
+- **Overdue Service** — equipment where `next_service_date` is in the past and `status != retired`. This count appears in the page header in red when greater than zero.
+
+The table highlights overdue assets in red and shows assets due within 7 days in yellow, with the number of days remaining displayed inline.
+
+## Adding equipment
+
+<Steps>
+  <Step title="Open the Equipment page">
+    Navigate to **Equipment** in the sidebar. Click **Add Equipment** in the top-right corner.
+  </Step>
+  <Step title="Enter asset details">
+    Fill in the equipment form:
+
+    - **Name** (required) — a descriptive name, e.g. "Excavator CAT 320" or "Primary Crusher Feed Belt".
+    - **Type** — the equipment category, e.g. "Excavator", "Drill", "Truck", "Pump".
+    - **Serial Number** — the manufacturer serial number or your internal asset tag.
+    - **Status** — set to `operational` for new active assets.
+    - **Last Serviced** — date of the most recent completed service (YYYY-MM-DD).
+    - **Next Service Due** — the scheduled date for the next service interval (YYYY-MM-DD).
+    - **Notes** — condition notes, location on site, or any relevant comments.
+  </Step>
+  <Step title="Save the record">
+    Click **Add Equipment**. The asset appears in the equipment table immediately and is included in dashboard counts.
+  </Step>
+</Steps>
+
+## Updating equipment status
+
+To mark an asset as in maintenance or return it to service:
+
+<Steps>
+  <Step title="Find the asset">
+    Use the status filter pills at the top of the Equipment page to narrow to **Operational** or **In Maintenance** assets. You can also search by name, type, or serial number.
+  </Step>
+  <Step title="Open the edit form">
+    Click the edit (pencil) icon on the asset row.
+  </Step>
+  <Step title="Change the status">
+    Select the new **Status** from the dropdown: `operational`, `maintenance`, or `retired`.
+  </Step>
+  <Step title="Update service dates if applicable">
+    If you are completing a service, set **Last Serviced** to today and update **Next Service Due** to the next scheduled interval.
+  </Step>
+  <Step title="Save">
+    Click **Save Changes**. The dashboard counts update immediately.
+  </Step>
+</Steps>
+
+## Scheduling and overdue logic
+
+Set `next_service_date` when adding or editing any asset. The system checks this date on every page load:
+
+- If `next_service_date` is in the past **and** `status` is not `retired`, the asset is flagged as **overdue**.
+- Overdue assets are highlighted in red in the equipment table.
+- Assets due within the next 7 days are highlighted in yellow with a day countdown.
+
+<Warning>
+  Retiring an asset (`status = retired`) removes it from overdue calculations, but the record and its service history are preserved. Do not delete equipment records — use `retired` status instead so historical data remains intact.
+</Warning>
+
+## Equipment field reference
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | text | Yes | Descriptive asset name |
+| `type` | text | No | Equipment category, e.g. Excavator, Drill, Truck |
+| `serial_number` | text | No | Manufacturer serial number or internal asset tag |
+| `status` | enum | Yes | `operational`, `maintenance`, or `retired` |
+| `last_service_date` | date | No | Date of most recent completed service (YYYY-MM-DD) |
+| `next_service_date` | date | No | Scheduled date of next service (YYYY-MM-DD); drives overdue alerts |
+| `notes` | text | No | Condition notes, site location, or other remarks |

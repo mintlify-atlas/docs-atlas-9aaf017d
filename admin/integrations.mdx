@@ -1,0 +1,112 @@
+---
+title: "Connecting FW Mining OS to external services"
+description: "Enable and configure integrations with ERP systems, accounting platforms, IoT sensor networks, GPS fleet tracking, webhooks, and analytics tools."
+---
+
+FW Mining OS can connect to external systems through its integrations framework. Integration configurations are stored per organization in the `integration_configs` table — each record holds the integration type, a JSON configuration object, and an enabled flag. Navigate to **Management → Integrations** to manage your organization's connections.
+
+Integration settings are org-wide. You must be an **Admin** to enable or disable integrations.
+
+## Available integrations
+
+<CardGroup cols={2}>
+  <Card title="SAP ERP" icon="database">
+    Sync purchase orders, inventory records, and financial data with your SAP environment. Category: **ERP & Finance**.
+  </Card>
+  <Card title="Xero" icon="calculator">
+    Automatically push transactions and invoices from FW Mining OS to Xero accounting. Category: **ERP & Finance**.
+  </Card>
+  <Card title="QuickBooks" icon="calculator">
+    Sync expenses and income entries to QuickBooks Online in real time. Category: **ERP & Finance**.
+  </Card>
+  <Card title="IoT Sensor Network" icon="microchip">
+    Connect mine sensor arrays to stream real-time environmental and production data into the platform. Category: **Operations**.
+  </Card>
+  <Card title="GPS Fleet Tracking" icon="location-dot">
+    Track heavy equipment and vehicles across your site in real time. Category: **Operations**.
+  </Card>
+  <Card title="Webhook (Generic)" icon="webhook">
+    Send event payloads to any HTTP endpoint when key platform events occur. Category: **Operations**.
+  </Card>
+  <Card title="Power BI" icon="chart-bar">
+    Stream production and financial data into Power BI dashboards. **Coming soon.**
+  </Card>
+  <Card title="Looker Studio" icon="chart-line">
+    Export reports to Google Looker Studio for advanced analytics. **Coming soon.**
+  </Card>
+</CardGroup>
+
+## Enabling an integration
+
+<Steps>
+  <Step title="Go to Integrations">
+    Navigate to **Management → Integrations**. All available integrations are displayed grouped by category (ERP & Finance, Operations, Analytics).
+  </Step>
+  <Step title="Find the integration">
+    Locate the integration card. Integrations marked **Soon** are not yet configurable and cannot be toggled.
+  </Step>
+  <Step title="Toggle the switch">
+    Flip the switch on the integration card to **on**. The card border highlights and a checkmark appears to confirm the integration is active.
+  </Step>
+  <Step title="Confirm the change">
+    The enabled state is saved to `integration_configs` immediately via an upsert on `(org_id, integration_type)`. A toast notification confirms the change.
+  </Step>
+</Steps>
+
+To disable an integration, toggle the switch off. This sets `enabled = false` in `integration_configs` but preserves the configuration record so you can re-enable it later without losing settings.
+
+## Integration data model
+
+Integration state is persisted in the `integration_configs` table:
+
+```sql
+-- integration_configs columns
+org_id            uuid      -- the organization this config belongs to
+integration_type  text      -- e.g. "erp_sap", "accounting_xero", "webhook_generic"
+config            jsonb     -- integration-specific configuration key/value pairs
+enabled           boolean   -- whether the integration is currently active
+```
+
+The table uses a unique constraint on `(org_id, integration_type)` so each organization has at most one configuration record per integration type.
+
+## Backend provider and API connectivity
+
+FW Mining OS supports two backend providers, configured at deploy time via environment variables.
+
+| Variable | Value | Description |
+|---|---|---|
+| `VITE_BACKEND_PROVIDER` | `supabase` or `rest` | Selects the active backend |
+| `VITE_REST_BASE_URL` | URL string | Base URL for the Laravel REST API (required when using `rest`) |
+
+**Supabase** (default) — uses PostgreSQL, Supabase Auth, Realtime, and Storage. Integration configs are written directly to the database via the Supabase client.
+
+**Custom REST API** — uses a Laravel 11 backend with Sanctum authentication and MySQL. API calls are routed through the REST client at `src/lib/providers/rest/client.ts`. When `VITE_BACKEND_PROVIDER=rest`, the `restBaseUrl` is read from `VITE_REST_BASE_URL`.
+
+<Note>
+The backend provider is set at build time and cannot be changed at runtime by any user, including admins. To switch providers, update the environment variables and redeploy the frontend. Use the **Test Connection** button in **Settings → System Settings → Backend Provider** to verify the REST API is reachable after deployment.
+</Note>
+
+### Switching to the REST backend
+
+<Steps>
+  <Step title="Deploy the API">
+    Deploy the `mining-os-api` Laravel 11 application to your server or cPanel host. Follow the instructions in `DEPLOY.md` in the API repository.
+  </Step>
+  <Step title="Run migrations">
+    Create a MySQL database, configure `.env`, and run `php artisan migrate` to set up the schema.
+  </Step>
+  <Step title="Set environment variables">
+    In your frontend deployment environment (e.g., Vercel), set:
+
+    ```bash
+    VITE_BACKEND_PROVIDER=rest
+    VITE_REST_BASE_URL=https://your-api-domain.com/api/v1
+    ```
+  </Step>
+  <Step title="Rebuild and redeploy">
+    Trigger a new frontend build. The Vite build process bakes the environment variables into the bundle at compile time.
+  </Step>
+  <Step title="Verify the connection">
+    Log in, go to **Settings → System Settings → Backend Provider**, and click **Test Connection**. A successful test confirms the frontend can reach `GET /health` on your API and that it returns `{ data: { status: "ok" } }`.
+  </Step>
+</Steps>

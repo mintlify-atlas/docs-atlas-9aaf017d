@@ -1,81 +1,125 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
-icon: 'rocket'
+title: "Get up and running with FW Mining OS in minutes"
+sidebarTitle: "Quickstart"
+description: "Create your organization, add your first mine site, invite your team, and record your first transaction — all in a single session."
+icon: "rocket"
 ---
 
-## Get started in three steps
+FW Mining OS sets up in a single session. By the end of this guide you will have a working organization, at least one mine site, your first team member invited, and your first transaction on record.
 
-Get your documentation site running locally and make your first customization.
+<Steps>
 
-### Step 1: Set up your local environment
+  <Step title="Create your account">
+    Navigate to the **Register** page in FW Mining OS and fill in the sign-up form:
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+    - **Organization name** — the legal or trading name of your mining company. This becomes your top-level tenant and cannot be changed after registration.
+    - **Your full name**
+    - **Email address**
+    - **Password** — minimum 8 characters
 
-### Step 2: Deploy your changes
+    After you submit, FW Mining OS automatically creates your organization, a default site called **Main Site**, and assigns you the **admin** role for that site.
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+    <Note>
+      If your organization already has an account, do not register a second one. Ask your admin to invite you via the Team section instead.
+    </Note>
+  </Step>
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+  <Step title="Create your first site">
+    After logging in you land on the Dashboard. By default, registration creates a **Main Site** for you. Rename it or add additional sites to match your real mine locations:
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+    1. Click **Settings** in the left sidebar.
+    2. Go to **Organization**.
+    3. Under **Sites**, click **Add site**.
+    4. Enter a **Site name**, **Location**, and **Timezone**.
+    5. Click **Save**.
 
-### Step 3: Go live
+    The new site appears in the site selector at the top of the sidebar. Switch between sites at any time — all data (transactions, inventory, team) is scoped to the active site.
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+    <Tip>
+      Use descriptive names like "Kalgoorlie North Pit" rather than generic labels so team members can identify sites at a glance.
+    </Tip>
+  </Step>
 
-## Next steps
+  <Step title="Invite team members">
+    Bring your team in without sharing passwords. FW Mining OS uses invite links so each member registers their own credentials.
 
-Now that you have your docs running, explore these key features:
+    1. Select the site you want to add members to using the site selector.
+    2. Click **Team** in the left sidebar.
+    3. Click **Invite member**.
+    4. Enter the member's **email address** and select their **role** (`site_manager`, `worker`, or `viewer`).
+    5. Click **Send invite**.
+
+    The invitee receives an email with a link to the **Accept Invite** page. They set their name and password, and are immediately added to the site with the role you assigned.
+
+    <Note>
+      Roles are per-site. If a user needs access to multiple sites, invite them to each site separately with the appropriate role for each.
+    </Note>
+  </Step>
+
+  <Step title="Configure modules">
+    FW Mining OS ships with all feature modules enabled. If your organization does not use a module — for example, if you have no customer-facing sales — you can disable it to keep the interface clean.
+
+    1. Click **Settings** → **System**.
+    2. Toggle off any modules your organization does not need: **Messages**, **Campaigns**, **Customers**, **Reports**, **Team**, **Supply Chain**, or **Operations**.
+    3. Changes take effect immediately for all users in your organization.
+
+    <Tip>
+      You can re-enable any module at any time. Disabling a module hides its navigation items and pages but does not delete any data.
+    </Tip>
+  </Step>
+
+  <Step title="Record your first transaction">
+    Transactions are the financial backbone of each site. Record an income or expense entry to confirm everything is working.
+
+    1. Click **Transactions** in the left sidebar.
+    2. Click **New Transaction**.
+    3. Fill in the form:
+       - **Type** — `income`, `expense`, or `refund`
+       - **Amount** — unit price × quantity
+       - **Category** — e.g., `fuel`, `equipment`, `gold_sale`
+       - **Date** — defaults to today
+       - **Description** (optional) — a short note for reference
+    4. Click **Save**.
+
+    The transaction appears in the list immediately and is reflected in the Dashboard KPIs.
+
+    <Note>
+      FW Mining OS is offline-first. If you are not connected to the internet when you save, the transaction is queued locally and syncs automatically the next time you come online.
+    </Note>
+  </Step>
+
+  <Step title="Check your Dashboard">
+    Return to the Dashboard (click the FW Mining OS logo or navigate to `/`) to see your data reflected in real time.
+
+    The KPI cards at the top of the Dashboard show:
+
+    - **Revenue** — total income transactions for the selected period
+    - **Expenses** — total expense transactions for the selected period
+    - **Net Profit** — revenue minus expenses
+    - **Trend indicators** — period-over-period change for each metric
+
+    Use the period selector to switch between daily, weekly, monthly, and custom ranges.
+
+    <Tip>
+      Set KPI targets in **Settings → Targets** so the Dashboard highlights when revenue or profit falls below your goals.
+    </Tip>
+  </Step>
+
+</Steps>
+
+## What to do next
 
 <CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card title="Core concepts" icon="map" href="/concepts">
+    Understand organizations, sites, roles, modules, and offline sync in depth.
+  </Card>
+  <Card title="Transactions" icon="dollar-sign" href="/features/transactions">
+    Learn the full transaction workflow: categories, statuses, bulk import, and reports.
+  </Card>
+  <Card title="Inventory management" icon="boxes-stacked" href="/features/inventory">
+    Track stock levels, log consumption, and set reorder alerts.
+  </Card>
+  <Card title="Team & scheduling" icon="users" href="/operations/team">
+    Add workers, plan shifts, and manage timesheets across your sites.
+  </Card>
 </CardGroup>
-
-<Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
-</Note>

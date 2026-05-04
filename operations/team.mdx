@@ -1,0 +1,128 @@
+---
+title: "Managing workers, shifts, and timesheets"
+description: "Add workers, assign statuses, plan shifts with start and end times, and log timesheet records with hours worked and output metrics per shift."
+---
+
+The Team module gives site managers a single place to manage the people on site. You can add workers with their role and department, plan shifts on a weekly schedule, and log timesheet records that capture hours worked and production output per shift. All data is scoped to the active site.
+
+<Tabs>
+  <Tab title="Workers">
+    Workers are the core records in the Team module. Each worker belongs to one site and has a status that controls whether they appear in shift planning.
+
+    ## Adding a worker
+
+    <Steps>
+      <Step title="Open the Team page">
+        Navigate to **Team** in the sidebar. Click **Add Worker** in the top-right corner.
+      </Step>
+      <Step title="Enter worker details">
+        Fill in the worker form:
+
+        - **Full Name** (required) — the worker's legal name as it will appear in reports and timesheets.
+        - **Position** — job title, e.g. "Drill Operator" or "Site Supervisor".
+        - **Department** — operational group, e.g. "Extraction" or "Processing".
+        - **Hire Date** — date the worker joined the site (YYYY-MM-DD).
+        - **Status** — see the status reference below.
+      </Step>
+      <Step title="Save the record">
+        Click **Add Worker**. The worker appears immediately in the Workers table and becomes available for shift assignment.
+      </Step>
+    </Steps>
+
+    ## Worker status reference
+
+    | Status | Meaning |
+    |--------|---------|
+    | `active` | Worker is currently on site and available for shift planning. Only active workers appear in the shift assignment dropdown. |
+    | `on_leave` | Worker is temporarily absent (e.g. annual leave, medical). They remain in the roster but are excluded from shift planning. |
+    | `terminated` | Worker has left the site permanently. The record is retained for historical timesheet data but is hidden from active workflows. |
+
+    <Tip>
+      Update a worker's status rather than deleting the record. Deleting a worker removes their profile, but their past shift records are preserved — the worker name will show as "Unknown" in those records.
+    </Tip>
+
+    ## Worker field reference
+
+    | Field | Type | Required | Description |
+    |-------|------|----------|-------------|
+    | `full_name` | text | Yes | Worker's full name |
+    | `position` | text | No | Job title or role |
+    | `department` | text | No | Operational department |
+    | `hire_date` | date | No | Start date on site (YYYY-MM-DD) |
+    | `status` | enum | Yes | `active`, `on_leave`, or `terminated` |
+  </Tab>
+
+  <Tab title="Shifts">
+    Planned shifts let site managers schedule workers for specific dates and time windows. The weekly schedule view shows all planned shifts within a selected date range.
+
+    ## Planning a shift
+
+    <Steps>
+      <Step title="Open the schedule">
+        Go to **Team** and select the **Schedule** tab, or click **Plan Shift** from the Team page header.
+      </Step>
+      <Step title="Select the worker and date">
+        Choose an active worker from the dropdown. Workers with `on_leave` or `terminated` status do not appear. Set the **Shift Date** (YYYY-MM-DD).
+      </Step>
+      <Step title="Set the time window">
+        Enter **Start Time** and **End Time** in HH:MM format. The system enforces that end time must be after start time.
+      </Step>
+      <Step title="Add optional notes">
+        Use the **Notes** field for any special instructions, hazard warnings, or location details relevant to this shift.
+      </Step>
+      <Step title="Save the shift">
+        Click **Plan Shift**. The shift appears on the weekly schedule grid for the selected date.
+      </Step>
+    </Steps>
+
+    ## Planned shift field reference
+
+    | Field | Type | Required | Description |
+    |-------|------|----------|-------------|
+    | `worker_id` | uuid | Yes | Links to an active worker record |
+    | `shift_date` | date | Yes | The calendar date of the shift (YYYY-MM-DD) |
+    | `start_time` | time | Yes | Shift start in HH:MM |
+    | `end_time` | time | Yes | Shift end in HH:MM — must be after `start_time` |
+    | `notes` | text | No | Free-text notes for the shift |
+
+    <Note>
+      The weekly schedule view fetches planned shifts between a `from` and `to` date, ordered by date and start time. Navigate weeks using the date picker controls at the top of the schedule.
+    </Note>
+  </Tab>
+
+  <Tab title="Timesheets">
+    Shift records are the actual timesheet entries — logged after a shift is completed. They capture hours worked and an optional production output metric, making them useful for both payroll and productivity analysis.
+
+    ## Logging a timesheet entry
+
+    <Steps>
+      <Step title="Open the log shift form">
+        From the **Team** page, click **Log Shift**. You can also click the **Log** button on any worker row to pre-select that worker.
+      </Step>
+      <Step title="Select the worker and date">
+        Choose an active worker and enter the **Shift Date**. The date defaults to today.
+      </Step>
+      <Step title="Enter hours and output">
+        - **Hours Worked** — total hours for the shift (0–24, in 0.5 increments).
+        - **Output** — the quantity produced during the shift, e.g. `12.5`.
+        - **Output Unit** — the unit of measurement, e.g. `tonnes` or `carats`.
+      </Step>
+      <Step title="Save the record">
+        Click **Log Shift**. The record appears in the **Shift Records** tab, sorted by date descending.
+      </Step>
+    </Steps>
+
+    ## Timesheet field reference
+
+    | Field | Type | Required | Description |
+    |-------|------|----------|-------------|
+    | `worker_id` | uuid | Yes | The worker this record belongs to |
+    | `shift_date` | date | Yes | Date the shift was worked (YYYY-MM-DD) |
+    | `hours_worked` | numeric | No | Hours on shift (0–24) |
+    | `output_metric` | numeric | No | Quantity produced during the shift |
+    | `metric_unit` | text | No | Unit for `output_metric`, e.g. `tonnes`, `carats` |
+    | `notes` | text | No | Free-text notes |
+
+    The Team page header shows aggregate stats across all logged shifts for the active site: active worker count, average hours per shift, and total shifts logged. The **Hours by Worker** chart shows cumulative hours across all shift records, up to the top 8 workers by total hours.
+  </Tab>
+</Tabs>

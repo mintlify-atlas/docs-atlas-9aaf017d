@@ -1,0 +1,112 @@
+---
+title: 'Recording and managing financial transactions'
+description: 'Record income, expenses, and refunds; filter by type, status, customer, or date; and track a running balance across all site financial activity.'
+---
+
+The Transactions page is the ledger for all money flowing in and out of a mine site. Every payment received, expense incurred, or inventory item consumed creates a transaction record that rolls up into the Dashboard KPIs and Reports.
+
+<CardGroup cols={2}>
+  <Card title="Create transactions" icon="plus">
+    Record a payment, log an expense, or consume inventory — each action creates a typed, categorised transaction.
+  </Card>
+  <Card title="Filter and search" icon="filter">
+    Narrow by type, status, category, customer, or date range. Full-text search across description, reference, and category.
+  </Card>
+  <Card title="Running balance" icon="scale">
+    A live running balance column accumulates all non-cancelled transactions oldest to newest.
+  </Card>
+  <Card title="Export and import" icon="arrow-down-to-line">
+    Download a CSV of any filtered view, or bulk-import transactions from a spreadsheet.
+  </Card>
+</CardGroup>
+
+## Transaction types and statuses
+
+Every transaction has a **type** and a **status**. Only `success` transactions count toward KPI totals.
+
+**Types**
+
+| Type | Description |
+|---|---|
+| `income` | Money received from a customer or other source |
+| `expense` | Money spent on operations, consumables, or services |
+| `refund` | A reversal of a previous income transaction |
+
+**Statuses**
+
+| Status | Meaning |
+|---|---|
+| `pending` | Recorded but not yet confirmed |
+| `success` | Confirmed — included in KPI totals |
+| `refunded` | Income that has been returned to the customer |
+| `cancelled` | Voided — excluded from all calculations |
+
+**Status workflow:** Transactions start as `pending` and move to `success` once confirmed, or to `cancelled` if voided. Income transactions can also move to `refunded`.
+
+## Field reference
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `description` | string | No | Free-text description of the transaction |
+| `reference_no` | string | No | Unique invoice or reference number |
+| `category` | string | No | Custom category label (e.g. "Diesel", "Contractor") |
+| `customer_id` | UUID | No | Links the transaction to a customer record |
+| `expense_category_id` | UUID | No | Links to a structured expense category |
+| `inventory_item_id` | UUID | No | Set automatically when source is `"inventory"` |
+| `source` | string | No | Origin of the transaction: `"manual"` or `"inventory"` |
+| `type` | string | **Yes** | `income`, `expense`, or `refund` |
+| `status` | string | **Yes** | `pending`, `success`, `refunded`, or `cancelled` |
+| `quantity` | number | **Yes** | Number of units; must be ≥ 1 |
+| `unit_price` | number | **Yes** | Price per unit; amount = `quantity × unit_price` |
+| `currency` | string | No | ISO currency code, defaults to `USD` |
+| `transaction_date` | date | **Yes** | The date the transaction occurred (`YYYY-MM-DD`) |
+
+## Creating a transaction
+
+<Steps>
+  <Step title="Open the Add menu">
+    Click the **Add** button in the top-right corner of the Transactions page. A dropdown shows three options.
+  </Step>
+  <Step title="Choose the transaction type">
+    - **Record Payment** — creates an `income` transaction.
+    - **Record Expense** — creates an `expense` transaction.
+    - **Use Inventory** — consumes stock and automatically creates a `source: "inventory"` expense transaction.
+  </Step>
+  <Step title="Fill the form">
+    Enter the description, amount, date, and optional customer or category. For inventory consumption, select the item and quantity.
+  </Step>
+  <Step title="Submit">
+    Click **Add** (or **Log Usage** for inventory). The transaction appears in the table and the running balance updates immediately.
+  </Step>
+  <Step title="Confirm the transaction">
+    New transactions default to `pending`. Use the Status dropdown in the table row to change it to `success` once payment or expense is confirmed.
+  </Step>
+</Steps>
+
+## Filtering transactions
+
+The toolbar above the table exposes the following filters. All filters stack — selecting multiple narrows the result set further.
+
+| Filter | Options |
+|---|---|
+| Date range | Custom from / to date inputs with a **Clear dates** shortcut |
+| Type | All, income, expense, refund |
+| Status | All, success, pending, refunded, cancelled |
+| Category | Derived from existing transaction categories on this site |
+| Customer | Derived from customers linked to this site |
+
+A full-text search box matches against `description`, `reference_no`, and `category`.
+
+## Sources: manual vs inventory
+
+Transactions with `source: "inventory"` are created automatically when you log inventory consumption from the Inventory page. They should not be edited directly — delete the consumption record from Inventory if a correction is needed.
+
+## Export and import
+
+**Export CSV** — downloads all rows currently visible (respecting active filters) with columns: Date, Reference, Description, Category, Customer, Type, Status, Qty, Unit Price, Total.
+
+**Import CSV** — bulk-creates transactions from a spreadsheet. Required columns: `Type`, `Status`, `Quantity`, `Unit Price`, `Transaction Date`. Optional: `Description`, `Reference No`, `Category`.
+
+<Note>
+  **Offline behaviour:** When your device is offline, create and update operations are queued locally and replayed automatically when connectivity is restored. Conflict resolution uses server-wins — if the same transaction was modified online while you were offline, the server version is kept.
+</Note>
